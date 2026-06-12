@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  ADMIN
+  MANAGER
+  TECHNICIAN
+  VIEWER
+}
+
+enum AssetStatus {
+  OPERATIONAL
+  UNDER_MAINTENANCE
+  DEGRADED
+  DECOMMISSIONED
+  IN_STORAGE
+}
+
+enum LifecycleStage {
+  PROCUREMENT
+  COMMISSIONED
+  ACTIVE
+  END_OF_LIFE
+  DISPOSED
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  APPROVED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+enum WorkOrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum VendorType {
+  ASSET_VENDOR
+  PARTS_VENDOR
+  SERVICE_PROVIDER
+}
+
+// ==========================================
+// USER & ORGANIZATION
+// ==========================================
+
+/// Organizations represent the top-level tenant in a B2B SaaS or a major business entity.
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  sites Site[]
+}
+
+/// Users represent individuals accessing the system.
+model User {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String   @unique
+  name           String
+  role           Role     @default(VIEWER)
+  organizationId String   @db.Uuid
+  siteId         String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site         Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+
+  assignedWorkOrders WorkOrder[]      @relation("AssignedTechnician")
+  assetHistories     AssetHistory[]   @relation("PerformedBy")
+  riskAssessments    RiskAssessment[] @relation("AssessedBy")
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+// ==========================================
+// SITE STRUCTURE
+// ==========================================
+
+/// Sites represent physical locations, plants, or facilities.
+model Site {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  location       String?
+  organizationId String   @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users          User[]
+  assets         Asset[]
+  workOrders     WorkOrder[]
+  inventoryParts InventoryPart[]
+
+  @@index([organizationId])
+}
+
+// ==========================================
+// ASSET MANAGEMENT
+// ==========================================
+
+/// Assets represent physical equipment (e.g., HVAC, Generator). Supports parent-child hierarchy.
+model Asset {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String         @unique /// Unique identifier for the asset (e.g., GEN-303)
+  name             String
+  categoryId       String?        @db.Uuid
+  status           AssetStatus    @default(OPERATIONAL)
+  lifecycleStage   LifecycleStage @default(ACTIVE)
+  criticalityScore Int            @default(1) /// 1 (Low) to 5 (Critical)
+
+  parentId String? @db.Uuid /// Self-referencing foreign key for hierarchy
+  siteId   String  @db.Uuid
+  vendorId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Asset?  @relation("AssetHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Asset[] @relation("AssetHierarchy")
+
+  site     Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  category AssetCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  vendor   Vendor?        @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  documents          AssetDocument[]
+  histories          AssetHistory[]
+  maintenanceProgs   MaintenanceProgram[]
+  workOrders         WorkOrder[]
+  riskAssessments    RiskAssessment[]
+  reliabilityMetrics ReliabilityMetric[]
+
+  @@index([siteId])
+  @@index([parentId])
+  @@index([code])
+}
+
+/// Asset Categories group similar assets (e.g., HVAC, Rolling Stock).
+model AssetCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  assets Asset[]
+}
+
+/// Documents associated with an Asset (e.g., Manuals, Schematics).
+model AssetDocument {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String
+  url       String
+  assetId   String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+/// History tracks events, transfers, or status changes of an Asset.
+model AssetHistory {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId       String   @db.Uuid
+  action        String /// e.g., STATUS_CHANGE, RELOCATED
+  description   String?
+  performedById String?  @db.Uuid
+  createdAt     DateTime @default(now())
+
+  asset       Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  performedBy User? @relation("PerformedBy", fields: [performedById], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+}
+
+// ==========================================
+// MAINTENANCE MANAGEMENT
+// ==========================================
+
+/// Maintenance Programs define recurring, preventive maintenance schedules.
+model MaintenanceProgram {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  description   String?
+  frequencyDays Int /// How often this program generates a Work Order (in days)
+  assetId       String   @db.Uuid
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  asset      Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  workOrders WorkOrder[]
+
+  @@index([assetId])
+}
+
+/// Work Orders represent actual maintenance tasks (preventive or reactive).
+model WorkOrder {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  status      WorkOrderStatus   @default(DRAFT)
+  priority    WorkOrderPriority @default(MEDIUM)
+
+  assetId              String  @db.Uuid
+  maintenanceProgramId String? @db.Uuid /// If generated by a preventive program
+  assignedToId         String? @db.Uuid
+  siteId               String  @db.Uuid
+
+  plannedStartDate DateTime?
+  plannedEndDate   DateTime?
+  actualStartDate  DateTime?
+  actualEndDate    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asset              Asset               @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  maintenanceProgram MaintenanceProgram? @relation(fields: [maintenanceProgramId], references: [id], onDelete: SetNull)
+  assignedTo         User?               @relation("AssignedTechnician", fields: [assignedToId], references: [id], onDelete: SetNull)
+  site               Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  partsConsumed WorkOrderPart[]
+
+  @@index([assetId])
+  @@index([siteId])
+  @@index([assignedToId])
+}
+
+// ==========================================
+// INVENTORY MANAGEMENT
+// ==========================================
+
+/// Inventory Parts are spare parts or materials kept in stock.
+model InventoryPart {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String  @unique
+  name           String
+  description    String?
+  quantityOnHand Int     @default(0)
+  minStockLevel  Int     @default(0)
+  reorderLevel   Int     @default(0)
+  cost           Float   @default(0.0)
+
+  siteId   String  @db.Uuid
+  vendorId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site   Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  workOrderParts WorkOrderPart[]
+
+  @@index([siteId])
+}
+
+/// Work Order Parts track the consumption of parts for specific tasks (Many-to-Many).
+model WorkOrderPart {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId      String   @db.Uuid
+  inventoryPartId  String   @db.Uuid
+  quantityConsumed Int
+  createdAt        DateTime @default(now())
+
+  workOrder     WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  inventoryPart InventoryPart @relation(fields: [inventoryPartId], references: [id], onDelete: Restrict)
+
+  @@index([workOrderId])
+  @@index([inventoryPartId])
+}
+
+// ==========================================
+// VENDOR MANAGEMENT
+// ==========================================
+
+/// Vendors supply assets, parts, or services.
+model Vendor {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  type        VendorType @default(PARTS_VENDOR)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  assets         Asset[]
+  inventoryParts InventoryPart[]
+}
+
+// ==========================================
+// RISK MANAGEMENT
+// ==========================================
+
+/// Risk Assessments track the probability and impact of asset failure.
+model RiskAssessment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId        String   @db.Uuid
+  probability    Int /// 1 (Rare) to 5 (Almost Certain)
+  impact         Int /// 1 (Negligible) to 5 (Catastrophic)
+  riskScore      Int /// probability * impact
+  mitigationPlan String?
+  assessedById   String?  @db.Uuid
+  assessedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  asset      Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assessedBy User? @relation("AssessedBy", fields: [assessedById], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+}
+
+// ==========================================
+// RELIABILITY MANAGEMENT
+// ==========================================
+
+/// Reliability Metrics measure asset performance (MTBF, MTTR, etc.).
+model ReliabilityMetric {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId      String   @db.Uuid
+  mtbf         Float? /// Mean Time Between Failures (hours)
+  mttr         Float? /// Mean Time To Repair (hours)
+  availability Float? /// Percentage (e.g., 99.9%)
+  downtime     Float? /// Total downtime recorded in hours
+  recordedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([recordedAt])
+}
