@@ -8,6 +8,9 @@ import SortableHeader from '../../../components/ui/SortableHeader';
 
 export default function CategoriesPage() {
   const { data, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/settings/categories', initialSortBy: 'name' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [formData, setFormData] = useState({ id: '', name: '', description: '' });
 
   const openAddModal = () => {
     setModalMode('add');

@@ -8,6 +8,9 @@ import SortableHeader from '../../../components/ui/SortableHeader';
 
 export default function SitesPage() {
   const { data, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/settings/sites', initialSortBy: 'name' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [formData, setFormData] = useState({ id: '', name: '', location: '' });
 
   const openAddModal = () => {
     setModalMode('add');
