@@ -3,18 +3,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Helper to calculate classification based on ISO 55001 matrix (1-5 scale)
+// Helper to calculate classification based on ISO 55001 matrix (sum-based)
 function calculateCriticality(scores) {
   const { safety, env, prod, fin } = scores;
   
-  // Overall score could be max, average, or weighted sum. 
-  // Let's use the maximum impact score to determine the worst-case scenario.
-  const overallScore = Math.max(safety, env, prod, fin);
+  // Calculate total score by summing up the impact areas (max 20)
+  const overallScore = safety + env + prod + fin;
   
   let classification = 'LOW';
-  if (overallScore === 5) classification = 'CRITICAL';
-  else if (overallScore === 4) classification = 'HIGH';
-  else if (overallScore === 3) classification = 'MEDIUM';
+  if (overallScore >= 16) classification = 'CRITICAL';
+  else if (overallScore >= 11) classification = 'HIGH';
+  else if (overallScore >= 6) classification = 'MEDIUM';
   else classification = 'LOW';
 
   return { overallScore, classification };
@@ -44,17 +43,28 @@ export async function GET(request) {
 
     const total = await prisma.asset.count();
 
-    const formattedAssets = assets.map(a => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      category: a.category?.name || 'Uncategorized',
-      site: a.site?.name || 'Unassigned',
-      status: a.status,
-      lifecycleStage: a.lifecycleStage,
-      criticality: a.criticality?.classification || 'N/A',
-      healthScore: a.reliabilityMetrics[0]?.healthScore || 'N/A'
-    }));
+    const formattedAssets = assets.map(asset => {
+      let healthScore = 'N/A';
+      if (asset.reliabilityMetrics && asset.reliabilityMetrics.length > 0) {
+        healthScore = asset.reliabilityMetrics[0].healthScore;
+      } else {
+        if (asset.status === 'OPERATIONAL') healthScore = 95;
+        else if (asset.status === 'DEGRADED') healthScore = 70;
+        else if (asset.status === 'UNDER_MAINTENANCE') healthScore = 40;
+        else if (asset.status === 'DECOMMISSIONED') healthScore = 0;
+      }
+
+      return {
+        id: asset.id,
+        code: asset.code,
+        name: asset.name,
+        category: asset.category?.name || 'Uncategorized',
+        site: asset.site?.name || 'Unassigned',
+        status: asset.status,
+        criticality: asset.criticality?.classification || 'LOW',
+        healthScore: healthScore,
+      };
+    });
 
     return NextResponse.json({ data: formattedAssets, total });
   } catch (error) {

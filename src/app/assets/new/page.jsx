@@ -138,10 +138,17 @@ export default function NewAssetPage() {
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Based on worst-case impact scenario</p>
             </div>
             <div className="text-xl font-bold text-slate-900 dark:text-white">
-              {Math.max(formData.safetyImpact, formData.environmentalImpact, formData.productionImpact, formData.financialImpact) === 5 ? <span className="text-red-500">CRITICAL</span> :
-                Math.max(formData.safetyImpact, formData.environmentalImpact, formData.productionImpact, formData.financialImpact) === 4 ? <span className="text-orange-500">HIGH</span> :
-                  Math.max(formData.safetyImpact, formData.environmentalImpact, formData.productionImpact, formData.financialImpact) === 3 ? <span className="text-yellow-500">MEDIUM</span> :
-                    <span className="text-green-500">LOW</span>}
+              {(() => {
+                const s = parseInt(formData.safetyImpact) || 1;
+                const e = parseInt(formData.environmentalImpact) || 1;
+                const p = parseInt(formData.productionImpact) || 1;
+                const f = parseInt(formData.financialImpact) || 1;
+                const total = s + e + p + f;
+                if (total >= 16) return <span className="text-red-500">CRITICAL</span>;
+                if (total >= 11) return <span className="text-orange-500">HIGH</span>;
+                if (total >= 6) return <span className="text-yellow-500">MEDIUM</span>;
+                return <span className="text-green-500">LOW</span>;
+              })()}
             </div>
           </div>
         </div>
