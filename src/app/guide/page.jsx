@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function GuidePage() {
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10">
+    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10 pb-20">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Welcome to the EAM Platform
@@ -15,6 +15,7 @@ export default function GuidePage() {
       </div>
 
       <div className="space-y-6">
+        
         {/* Step 1 */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
           <div className="flex-shrink-0 mt-1">
@@ -48,16 +49,34 @@ export default function GuidePage() {
         </div>
 
         {/* Step 2 */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="flex-shrink-0 mt-1">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+              2
+            </div>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Set Asset Management Plan (ISO 55001)</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              Align your maintenance activities with your organizational goals. Set strategic performance targets for the Financial Year (e.g. Availability %, Downtime Reduction) to ensure all teams work towards the same reliability goals.
+            </p>
+            <Link href="/asset-management-plan" className="inline-flex items-center text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+              View Asset Management Plan &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* Step 3 */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
           <div className="flex-shrink-0 mt-1">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold text-xl">
-              2
+              3
             </div>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Register Assets</h3>
             <p className="text-slate-600 dark:text-slate-400 mb-4">
-              With your locations and categories defined, you can now log your physical equipment into the system. Every asset gets a unique ID, status, and criticality score.
+              With your locations and categories defined, you can now log your physical equipment into the system. Every asset gets a unique ID, lifecycle status, and criticality score.
             </p>
             <Link href="/assets" className="inline-flex items-center text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
               View Asset Registry &rarr;
@@ -65,11 +84,11 @@ export default function GuidePage() {
           </div>
         </div>
 
-        {/* Step 3 */}
+        {/* Step 4 */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
           <div className="flex-shrink-0 mt-1">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-bold text-xl">
-              3
+              4
             </div>
           </div>
           <div className="flex-1">
@@ -83,17 +102,35 @@ export default function GuidePage() {
           </div>
         </div>
 
-        {/* Step 4 */}
+        {/* Step 5 */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
+          <div className="flex-shrink-0 mt-1">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-bold text-xl">
+              5
+            </div>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Schedule Preventive Maintenance</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              Don't wait for things to break! Use the Preventive Maint planner to create recurring service schedules (Strategies). The system will dynamically forecast upcoming work orders on an interactive calendar grid.
+            </p>
+            <Link href="/work-orders/preventive" className="inline-flex items-center text-sm font-medium text-teal-600 dark:text-teal-400 hover:underline">
+              Preventive Maintenance Planner &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* Step 6 */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
           <div className="flex-shrink-0 mt-1">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-bold text-xl">
-              4
+              6
             </div>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Create & Track Work Orders</h3>
             <p className="text-slate-600 dark:text-slate-400 mb-4">
-              When an asset breaks or needs maintenance, create a Work Order. You can view work orders in a traditional paginated table, or use the interactive Kanban board to drag-and-drop tasks across statuses.
+              When an asset breaks or needs reactive maintenance, create a Work Order. You can view work orders in a paginated table or use the interactive Kanban board to drag-and-drop tasks across statuses.
             </p>
             <Link href="/work-orders" className="inline-flex items-center text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline">
               Open Work Orders &rarr;
@@ -101,11 +138,11 @@ export default function GuidePage() {
           </div>
         </div>
 
-        {/* Step 5 */}
+        {/* Step 7 */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex gap-6 hover:border-rose-300 dark:hover:border-rose-700 transition-colors">
           <div className="flex-shrink-0 mt-1">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-xl">
-              5
+              7
             </div>
           </div>
           <div className="flex-1">

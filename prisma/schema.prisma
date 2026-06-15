@@ -26,10 +26,12 @@ enum AssetStatus {
 }
 
 enum LifecycleStage {
-  PROCUREMENT
-  COMMISSIONED
-  ACTIVE
-  END_OF_LIFE
+  PLANNED
+  ACQUIRED
+  INSTALLED
+  OPERATIONAL
+  MAINTAINED
+  RETIRED
   DISPOSED
 }
 
@@ -53,6 +55,20 @@ enum VendorType {
   ASSET_VENDOR
   PARTS_VENDOR
   SERVICE_PROVIDER
+}
+
+enum CriticalityClassification {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ScheduleType {
+  WEEKLY
+  MONTHLY
+  ANNUAL
+  CUSTOM_RECURRING
 }
 
 // ==========================================
@@ -126,9 +142,13 @@ model Asset {
   name             String
   categoryId       String?        @db.Uuid
   status           AssetStatus    @default(OPERATIONAL)
-  lifecycleStage   LifecycleStage @default(ACTIVE)
-  criticalityScore Int            @default(1) /// 1 (Low) to 5 (Critical)
+  lifecycleStage   LifecycleStage @default(OPERATIONAL)
 
+  imageUrl         String?
+  manufacturer     String?
+  modelNumber      String?
+  serialNumber     String?
+  installationDate DateTime?
   parentId String? @db.Uuid /// Self-referencing foreign key for hierarchy
   siteId   String  @db.Uuid
   vendorId String? @db.Uuid
@@ -149,6 +169,7 @@ model Asset {
   workOrders         WorkOrder[]
   riskAssessments    RiskAssessment[]
   reliabilityMetrics ReliabilityMetric[]
+  criticality        AssetCriticality?
 
   @@index([siteId])
   @@index([parentId])
@@ -178,6 +199,20 @@ model AssetDocument {
   @@index([assetId])
 }
 
+/// Asset Criticality tracks the multi-dimensional impact of asset failure.
+model AssetCriticality {
+  id                  String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId             String                    @unique @db.Uuid
+  safetyImpact        Int                       @default(1)
+  environmentalImpact Int                       @default(1)
+  productionImpact    Int                       @default(1)
+  financialImpact     Int                       @default(1)
+  overallScore        Int                       @default(1)
+  classification      CriticalityClassification @default(LOW)
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
 /// History tracks events, transfers, or status changes of an Asset.
 model AssetHistory {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -203,6 +238,8 @@ model MaintenanceProgram {
   title         String
   description   String?
   frequencyDays Int /// How often this program generates a Work Order (in days)
+  scheduleType  ScheduleType @default(MONTHLY)
+  nextDueDate   DateTime?
   assetId       String   @db.Uuid
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -343,7 +380,9 @@ model ReliabilityMetric {
   assetId      String   @db.Uuid
   mtbf         Float? /// Mean Time Between Failures (hours)
   mttr         Float? /// Mean Time To Repair (hours)
+  failureRate  Float? /// Failures per year
   availability Float? /// Percentage (e.g., 99.9%)
+  oee          Float? /// Overall Equipment Effectiveness percentage
   downtime     Float? /// Total downtime recorded in hours
   recordedAt   DateTime @default(now())
   createdAt    DateTime @default(now())
@@ -352,4 +391,20 @@ model ReliabilityMetric {
 
   @@index([assetId])
   @@index([recordedAt])
+}
+
+// ==========================================
+// STRATEGIC ASSET MANAGEMENT PLAN (ISO 55001)
+// ==========================================
+
+/// Strategic targets established for a specific financial year.
+model StrategicTarget {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fiscalYear            String   @unique /// e.g., "FY 2026"
+  availabilityTarget    Float    @default(95.0)
+  downtimeTarget        Float    @default(10.0)
+  maintenanceCostTarget Float    @default(5.0)
+  assetHealthTarget     Float    @default(80.0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

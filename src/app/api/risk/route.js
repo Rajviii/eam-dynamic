@@ -53,7 +53,7 @@ export async function GET(request) {
     return NextResponse.json({ data: formattedRisks, total });
   } catch (error) {
     console.error('Error fetching risk assessments:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 

@@ -15,13 +15,15 @@ export async function GET() {
     // Critical Assets Count
     const criticalAssetsAtRiskCount = await prisma.asset.count({
       where: {
-        criticalityScore: { gte: 4 }
+        criticality: {
+          classification: 'CRITICAL'
+        }
       }
     });
 
     // Asset Health Overview (Simulated mapping based on existing schema)
-    const excellent = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticalityScore: { lte: 2 } } });
-    const good = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticalityScore: { gt: 2 } } });
+    const excellent = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticality: { classification: { in: ['LOW', 'MEDIUM'] } } } });
+    const good = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticality: { classification: { in: ['HIGH', 'CRITICAL'] } } } });
     const warning = await prisma.asset.count({ where: { status: 'DEGRADED' } });
     const critical = await prisma.asset.count({ where: { status: { in: ['UNDER_MAINTENANCE', 'DECOMMISSIONED'] } } });
 
@@ -40,11 +42,13 @@ export async function GET() {
 
     // Critical Assets at Risk List
     const topCriticalAssets = await prisma.asset.findMany({
-      where: { criticalityScore: { gte: 3 } },
-      orderBy: { criticalityScore: 'desc' },
+      where: { criticality: { classification: { in: ['HIGH', 'CRITICAL'] } } },
       take: 5,
-      include: { riskAssessments: true }
+      include: { riskAssessments: true, criticality: true }
     });
+
+    // Sort in memory to avoid complex relation ordering if needed, or assume take 5 is okay
+    topCriticalAssets.sort((a, b) => (b.criticality?.overallScore || 0) - (a.criticality?.overallScore || 0));
 
     const criticalAssetsList = topCriticalAssets.map(a => {
       // Base health on status
@@ -56,7 +60,7 @@ export async function GET() {
       // Find max risk score if any
       const maxRisk = a.riskAssessments.length > 0 
         ? Math.max(...a.riskAssessments.map(r => r.riskScore)) 
-        : (a.criticalityScore * 3); // mock fallback
+        : ((a.criticality?.overallScore || 1) * 3); // mock fallback
 
       let riskStr = 'Low';
       if (maxRisk >= 20) riskStr = 'Extreme';
@@ -68,7 +72,7 @@ export async function GET() {
         name: a.name,
         health,
         risk: riskStr,
-        criticality: a.criticalityScore >= 4 ? 'Critical' : 'High'
+        criticality: a.criticality?.classification === 'CRITICAL' ? 'Critical' : 'High'
       };
     });
 
@@ -138,6 +142,6 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

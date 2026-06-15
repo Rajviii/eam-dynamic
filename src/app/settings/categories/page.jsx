@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useDataTable } from '../../../hooks/useDataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SortableHeader from '../../../components/ui/SortableHeader';
+import Input from '../../../components/ui/Input';
+import Textarea from '../../../components/ui/Textarea';
 
 export default function CategoriesPage() {
   const { data, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/settings/categories', initialSortBy: 'name' });
@@ -123,14 +125,21 @@ export default function CategoriesPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category Name</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. HVAC" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                <textarea rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Optional details..."></textarea>
-              </div>
+              <Input
+                label="Category Name"
+                required
+                type="text"
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                placeholder="e.g. HVAC"
+              />
+              <Textarea
+                label="Description"
+                rows="3"
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                placeholder="Optional details..."
+              />
 
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">

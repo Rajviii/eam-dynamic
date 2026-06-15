@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Select from '../components/ui/Select';
 
 // Reusable KPI Widget Component
 function MetricWidget({ title, value, subtext, trend, trendUp }) {
@@ -132,25 +133,31 @@ export default function Dashboard() {
     return <div className="p-8 text-center text-slate-500">Loading dynamic dashboard...</div>;
   }
 
-  if (!stats) {
-    return <div className="p-8 text-center text-red-500">Failed to load dashboard metrics.</div>;
+  if (!stats || stats.error) {
+    return (
+      <div className="p-8 text-center text-red-500 flex flex-col items-center gap-4">
+        <p className="text-lg font-semibold">Failed to load dashboard metrics.</p>
+        <p className="text-sm">This is likely because the new ISO 55001 database schema migrations have not been applied yet.</p>
+        <p className="text-sm font-mono bg-slate-100 p-2 rounded">npx prisma db push --accept-data-loss && npx prisma db seed</p>
+      </div>
+    );
   }
 
   // Formatting segments for Donut Charts
   const healthSegments = [
-    { label: 'Excellent', value: stats.assetHealthOverview.excellent, color: '#3b82f6' }, // blue-500
-    { label: 'Good', value: stats.assetHealthOverview.good, color: '#22c55e' }, // green-500
-    { label: 'Warning', value: stats.assetHealthOverview.warning, color: '#f97316' }, // orange-500
-    { label: 'Critical', value: stats.assetHealthOverview.critical, color: '#ef4444' } // red-500
+    { label: 'Excellent', value: stats.assetHealthOverview?.excellent, color: '#3b82f6' }, // blue-500
+    { label: 'Good', value: stats.assetHealthOverview?.good, color: '#22c55e' }, // green-500
+    { label: 'Warning', value: stats.assetHealthOverview?.warning, color: '#f97316' }, // orange-500
+    { label: 'Critical', value: stats.assetHealthOverview?.critical, color: '#ef4444' } // red-500
   ];
   const healthTotal = healthSegments.reduce((a, b) => a + b.value, 0);
 
   const woSegments = [
     { label: 'Draft', value: stats.woStatuses?.draft, color: '#cbd5e1' }, // slate-300
-    { label: 'Assigned', value: stats.woStatuses.assigned, color: '#60a5fa' }, // blue-400
-    { label: 'In Progress', value: stats.woStatuses.inProgress, color: '#fb923c' }, // orange-400
-    { label: 'Waiting Parts', value: stats.woStatuses.waitingParts, color: '#a855f7' }, // purple-500
-    { label: 'Completed', value: stats.woStatuses.completed, color: '#22c55e' } // green-500
+    { label: 'Assigned', value: stats.woStatuses?.assigned, color: '#60a5fa' }, // blue-400
+    { label: 'In Progress', value: stats.woStatuses?.inProgress, color: '#fb923c' }, // orange-400
+    { label: 'Waiting Parts', value: stats.woStatuses?.waitingParts, color: '#a855f7' }, // purple-500
+    { label: 'Completed', value: stats.woStatuses?.completed, color: '#22c55e' } // green-500
   ];
   const woTotal = woSegments.reduce((a, b) => a + b.value, 0);
 
@@ -159,11 +166,11 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Dashboard</h1>
         <div className="flex items-center gap-3">
-          <select className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
+          <Select className="w-48">
             <option>All Sites</option>
             <option>Plant A</option>
             <option>Plant B</option>
-          </select>
+          </Select>
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg p-2">
             May 20 - Jun 20, 2024
           </div>
@@ -241,21 +248,21 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {stats.criticalAssetsList.map((asset, i) => (
+                {stats.criticalAssetsList?.map((asset, i) => (
                   <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
-                    <td className="py-3 font-medium text-slate-900 dark:text-slate-100">{asset.name}</td>
+                    <td className="py-3 font-medium text-slate-900 dark:text-slate-100">{asset?.name}</td>
                     <td className="py-3 text-center">
-                      <span className={`font-bold ${asset.health < 50 ? 'text-red-500' : asset.health < 80 ? 'text-orange-500' : 'text-green-500'}`}>{asset.health}</span>
+                      <span className={`font-bold ${asset?.health < 50 ? 'text-red-500' : asset?.health < 80 ? 'text-orange-500' : 'text-green-500'}`}>{asset?.health}</span>
                     </td>
                     <td className="py-3 text-center">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${asset.risk === 'Extreme' ? 'bg-red-100 text-red-700' : asset.risk === 'High' ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>{asset.risk}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${asset?.risk === 'Extreme' ? 'bg-red-100 text-red-700' : asset?.risk === 'High' ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>{asset?.risk}</span>
                     </td>
                     <td className="py-3 text-right">
-                      <span className="text-red-500 font-medium text-xs uppercase">{asset.criticality}</span>
+                      <span className="text-red-500 font-medium text-xs uppercase">{asset?.criticality}</span>
                     </td>
                   </tr>
                 ))}
-                {stats.criticalAssetsList.length === 0 && (
+                {stats.criticalAssetsList?.length === 0 && (
                   <tr><td colSpan={4} className="py-4 text-center text-slate-500 text-sm">No critical assets at risk.</td></tr>
                 )}
               </tbody>
@@ -270,54 +277,53 @@ export default function Dashboard() {
           <div className="flex-1 space-y-4">
 
             {/* Today */}
-            {stats.upcomingMaintenance.today.length > 0 && (
+            {stats.upcomingMaintenance?.today?.length > 0 && (
               <div>
                 <h4 className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase mb-2">Today</h4>
-                {stats.upcomingMaintenance.today.map(wo => (
-                  <div key={wo.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                {stats.upcomingMaintenance?.today?.map(wo => (
+                  <div key={wo?.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo.title}</span></div>
-                      <div className="text-xs text-blue-500 mt-0.5">{wo.id}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo?.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo?.title}</span></div>
+                      <div className="text-xs text-blue-500 mt-0.5">{wo?.id}</div>
                     </div>
-                    <span className={`text-xs font-bold ${wo.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo.priority}</span>
+                    <span className={`text-xs font-bold ${wo?.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo?.priority}</span>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Tomorrow */}
-            {stats.upcomingMaintenance.tomorrow.length > 0 && (
+            {stats.upcomingMaintenance?.tomorrow?.length > 0 && (
               <div>
                 <h4 className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase mb-2">Tomorrow</h4>
-                {stats.upcomingMaintenance.tomorrow.map(wo => (
-                  <div key={wo.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                {stats?.upcomingMaintenance?.tomorrow?.map(wo => (
+                  <div key={wo?.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo.title}</span></div>
-                      <div className="text-xs text-blue-500 mt-0.5">{wo.id}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo?.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo?.title}</span></div>
+                      <div className="text-xs text-blue-500 mt-0.5">{wo?.id}</div>
                     </div>
-                    <span className={`text-xs font-bold ${wo.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo.priority}</span>
+                    <span className={`text-xs font-bold ${wo?.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo?.priority}</span>
                   </div>
                 ))}
               </div>
             )}
 
             {/* This Week */}
-            {stats.upcomingMaintenance.thisWeek.length > 0 && (
+            {stats.upcomingMaintenance?.thisWeek?.length > 0 && (
               <div>
                 <h4 className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase mb-2">This Week</h4>
-                {stats.upcomingMaintenance.thisWeek.map(wo => (
-                  <div key={wo.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                {stats.upcomingMaintenance?.thisWeek?.map(wo => (
+                  <div key={wo?.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo.title}</span></div>
-                      <div className="text-xs text-blue-500 mt-0.5">{wo.id}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo?.asset} - <span className="font-normal text-slate-600 dark:text-slate-400">{wo?.title}</span></div>
+                      <div className="text-xs text-blue-500 mt-0.5">{wo?.id}</div>
                     </div>
-                    <span className={`text-xs font-bold ${wo.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo.priority}</span>
+                    <span className={`text-xs font-bold ${wo?.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`}>{wo?.priority}</span>
                   </div>
                 ))}
               </div>
             )}
-
-            {Object.values(stats.upcomingMaintenance).flat().length === 0 && (
+            {stats?.upcomingMaintenance && Object.values(stats.upcomingMaintenance).flat().length === 0 && (
               <p className="text-sm text-slate-500 italic">No upcoming maintenance scheduled.</p>
             )}
 

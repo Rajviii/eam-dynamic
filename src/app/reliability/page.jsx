@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
 
 function TrendChart({ data }) {
   if (!data || data.length === 0) return null;
@@ -232,36 +234,59 @@ export default function ReliabilityPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Asset</label>
-                <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="" disabled>Select Asset</option>
-                  {assets.map(a => (
-                    <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Target Asset"
+                required
+                value={formData.assetId}
+                onChange={e => setFormData({...formData, assetId: e.target.value})}
+              >
+                <option value="" disabled>Select Asset</option>
+                {assets.map(a => (
+                  <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                ))}
+              </Select>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">MTBF (Hours)</label>
-                  <input required type="number" step="0.1" min="0" value={formData.mtbf} onChange={e => setFormData({...formData, mtbf: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">MTTR (Hours)</label>
-                  <input required type="number" step="0.1" min="0" value={formData.mttr} onChange={e => setFormData({...formData, mttr: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                <Input
+                  label="MTBF (Hours)"
+                  required
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.mtbf}
+                  onChange={e => setFormData({...formData, mtbf: e.target.value})}
+                />
+                <Input
+                  label="MTTR (Hours)"
+                  required
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.mttr}
+                  onChange={e => setFormData({...formData, mttr: e.target.value})}
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Availability (%)</label>
-                  <input required type="number" step="0.1" min="0" max="100" value={formData.availability} onChange={e => setFormData({...formData, availability: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Downtime (Hours)</label>
-                  <input required type="number" step="0.1" min="0" value={formData.downtime} onChange={e => setFormData({...formData, downtime: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                <Input
+                  label="Availability (%)"
+                  required
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={formData.availability}
+                  onChange={e => setFormData({...formData, availability: e.target.value})}
+                />
+                <Input
+                  label="Downtime (Hours)"
+                  required
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.downtime}
+                  onChange={e => setFormData({...formData, downtime: e.target.value})}
+                />
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3">

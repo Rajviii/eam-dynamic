@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useDataTable } from '../../../hooks/useDataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SortableHeader from '../../../components/ui/SortableHeader';
+import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
 
 export default function VendorsPage() {
   const { data, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/settings/vendors', initialSortBy: 'name' });
@@ -139,32 +141,42 @@ export default function VendorsPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Company Name</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vendor Type</label>
-                <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="ASSET_VENDOR">Asset Vendor</option>
-                  <option value="PARTS_VENDOR">Parts Vendor</option>
-                  <option value="SERVICE_PROVIDER">Service Provider</option>
-                </select>
-              </div>
+              <Input
+                label="Company Name"
+                required
+                type="text"
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+              />
+              <Select
+                label="Vendor Type"
+                value={formData.type}
+                onChange={e => setFormData({...formData, type: e.target.value})}
+              >
+                <option value="ASSET_VENDOR">Asset Vendor</option>
+                <option value="PARTS_VENDOR">Parts Vendor</option>
+                <option value="SERVICE_PROVIDER">Service Provider</option>
+              </Select>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contact Name</label>
-                  <input type="text" value={formData.contactName} onChange={e => setFormData({...formData, contactName: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                  <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                <Input
+                  label="Contact Name"
+                  type="text"
+                  value={formData.contactName}
+                  onChange={e => setFormData({...formData, contactName: e.target.value})}
+                />
+                <Input
+                  label="Phone"
+                  type="text"
+                  value={formData.phone}
+                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-              </div>
+              <Input
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+              />
 
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">

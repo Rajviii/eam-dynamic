@@ -56,7 +56,7 @@ export async function GET(request) {
     return NextResponse.json({ data: formattedParts, total });
   } catch (error) {
     console.error('Error fetching inventory:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 

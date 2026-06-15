@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+import Textarea from '../../components/ui/Textarea';
 
 export default function RiskRegisterPage() {
   const { data: risks, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/risk', initialSortBy: 'id' });
@@ -201,30 +204,46 @@ export default function RiskRegisterPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Asset at Risk</label>
-                <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="" disabled>Select Asset</option>
-                  {assets.map(a => (
-                    <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Asset at Risk"
+                required
+                value={formData.assetId}
+                onChange={e => setFormData({...formData, assetId: e.target.value})}
+              >
+                <option value="" disabled>Select Asset</option>
+                {assets.map(a => (
+                  <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                ))}
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Identified Risk / Mitigation</label>
-                <textarea required rows="3" value={formData.risk} onChange={e => setFormData({...formData, risk: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Describe the risk and mitigation plan..." />
-              </div>
+              <Textarea
+                label="Identified Risk / Mitigation"
+                required
+                rows="3"
+                value={formData.risk}
+                onChange={e => setFormData({...formData, risk: e.target.value})}
+                placeholder="Describe the risk and mitigation plan..."
+              />
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Likelihood (1-5)</label>
-                  <input required type="number" min="1" max="5" value={formData.likelihood} onChange={e => setFormData({...formData, likelihood: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Consequence (1-5)</label>
-                  <input required type="number" min="1" max="5" value={formData.consequence} onChange={e => setFormData({...formData, consequence: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                <Input
+                  label="Likelihood (1-5)"
+                  required
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={formData.likelihood}
+                  onChange={e => setFormData({...formData, likelihood: e.target.value})}
+                />
+                <Input
+                  label="Consequence (1-5)"
+                  required
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={formData.consequence}
+                  onChange={e => setFormData({...formData, consequence: e.target.value})}
+                />
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3">

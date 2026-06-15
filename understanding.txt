@@ -1,0 +1,11 @@
+ISO 55001 is an international standard that provides a step-by-step framework for organizations to manage their assets effectively. 
+It helps companies get the most value out of their equipment, buildings, or finances, while balancing costs, risks, 
+performance, and sustainability throughout their entire lifespan.
+
+The Whole Lifecycle: It isn't just about maintaining things when they break. 
+It governs an asset from its birth (planning and purchasing) to its operation, maintenance, and eventual disposal.
+
+Why do companies use it?
+Organizations adopt this standard to:Reduce operating costs by eliminating unnecessary expenses and reactive repairs.
+Maximize the return on investment from everything they own.
+Minimize risks like unexpected downtime or safety hazards

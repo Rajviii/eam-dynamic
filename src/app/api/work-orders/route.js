@@ -81,7 +81,7 @@ export async function GET(request) {
     return NextResponse.json({ data: formattedData, total });
   } catch (error) {
     console.error('Error fetching work orders:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 

@@ -104,45 +104,45 @@ async function main() {
 
   // Johannesburg Plant A Assets
   const hvacA = await prisma.asset.create({
-    data: { code: 'HVAC-A-01', name: 'HVAC System A', categoryId: hvacCat.id, siteId: plantA.id, vendorId: carrier.id, criticalityScore: 4 }
+    data: { code: 'HVAC-A-01', name: 'HVAC System A', categoryId: hvacCat.id, siteId: plantA.id, vendorId: carrier.id, imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Carrier', modelNumber: 'CHVAC-2000', serialNumber: 'CA-987654321', installationDate: new Date('2020-03-15'), criticality: { create: { safetyImpact: 3, environmentalImpact: 2, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
   });
 
   const comp101 = await prisma.asset.create({
-    data: { code: 'COMP-101', name: 'Compressor #101', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, criticalityScore: 3 }
+    data: { code: 'COMP-101', name: 'Compressor #101', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, imageUrl: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Ingersoll Rand', modelNumber: 'UP6-15', serialNumber: 'IR-112233', installationDate: new Date('2021-06-10'), criticality: { create: { safetyImpact: 2, environmentalImpact: 1, productionImpact: 3, financialImpact: 3, overallScore: 3, classification: 'MEDIUM' } } }
   });
 
   const filter102 = await prisma.asset.create({
-    data: { code: 'FLTR-102', name: 'Air Filter #102', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, criticalityScore: 1 }
+    data: { code: 'FLTR-102', name: 'Air Filter #102', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, manufacturer: 'Donaldson', modelNumber: 'P182054', serialNumber: 'DN-554433', installationDate: new Date('2022-01-20'), criticality: { create: { safetyImpact: 1, environmentalImpact: 1, productionImpact: 1, financialImpact: 1, overallScore: 1, classification: 'LOW' } } }
   });
 
   const gen303 = await prisma.asset.create({
-    data: { code: 'GEN-303', name: 'Generator #303', categoryId: genCat.id, siteId: plantA.id, vendorId: siemens.id, criticalityScore: 5 }
+    data: { code: 'GEN-303', name: 'Generator #303', categoryId: genCat.id, siteId: plantA.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Siemens', modelNumber: 'SGE-1M', serialNumber: 'SG-9988776655', installationDate: new Date('2019-11-05'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
   const elecPanel501 = await prisma.asset.create({
-    data: { code: 'ELEC-501', name: 'Electrical Panel #501', categoryId: elecCat.id, siteId: plantA.id, vendorId: schneider.id, criticalityScore: 5 }
+    data: { code: 'ELEC-501', name: 'Electrical Panel #501', categoryId: elecCat.id, siteId: plantA.id, vendorId: schneider.id, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2069&auto=format&fit=crop', manufacturer: 'Schneider Electric', modelNumber: 'SQD-200A', serialNumber: 'SE-334455', installationDate: new Date('2018-08-22'), criticality: { create: { safetyImpact: 5, environmentalImpact: 3, productionImpact: 5, financialImpact: 4, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
   // Johannesburg Plant B Assets
   const hvacB = await prisma.asset.create({
-    data: { code: 'HVAC-B-01', name: 'HVAC System B', categoryId: hvacCat.id, siteId: plantB.id, vendorId: carrier.id, criticalityScore: 4 }
+    data: { code: 'HVAC-B-01', name: 'HVAC System B', categoryId: hvacCat.id, siteId: plantB.id, vendorId: carrier.id, imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Carrier', modelNumber: 'CHVAC-2000', serialNumber: 'CA-123456789', installationDate: new Date('2020-05-18'), criticality: { create: { safetyImpact: 3, environmentalImpact: 2, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
   });
 
   const comp201 = await prisma.asset.create({
-    data: { code: 'COMP-201', name: 'Compressor #201', categoryId: mechCat.id, siteId: plantB.id, parentId: hvacB.id, criticalityScore: 3 }
+    data: { code: 'COMP-201', name: 'Compressor #201', categoryId: mechCat.id, siteId: plantB.id, parentId: hvacB.id, manufacturer: 'Ingersoll Rand', modelNumber: 'UP6-15', serialNumber: 'IR-445566', installationDate: new Date('2021-07-15'), criticality: { create: { safetyImpact: 2, environmentalImpact: 1, productionImpact: 3, financialImpact: 3, overallScore: 3, classification: 'MEDIUM' } } }
   });
 
   const gen403 = await prisma.asset.create({
-    data: { code: 'GEN-403', name: 'Generator #403', categoryId: genCat.id, siteId: plantB.id, vendorId: siemens.id, criticalityScore: 5 }
+    data: { code: 'GEN-403', name: 'Generator #403', categoryId: genCat.id, siteId: plantB.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Siemens', modelNumber: 'SGE-1M', serialNumber: 'SG-1122334455', installationDate: new Date('2019-12-10'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
   // Pretoria DC Assets
   const pump601 = await prisma.asset.create({
-    data: { code: 'PUMP-601', name: 'Water Pump #601', categoryId: utilCat.id, siteId: dcPretoria.id, vendorId: siemens.id, criticalityScore: 4 }
+    data: { code: 'PUMP-601', name: 'Water Pump #601', categoryId: utilCat.id, siteId: dcPretoria.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Grundfos', modelNumber: 'CR-32', serialNumber: 'GF-667788', installationDate: new Date('2022-03-05'), criticality: { create: { safetyImpact: 2, environmentalImpact: 3, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
   });
 
   const gen701 = await prisma.asset.create({
-    data: { code: 'GEN-701', name: 'Backup Generator #701', categoryId: genCat.id, siteId: dcPretoria.id, vendorId: siemens.id, criticalityScore: 5 }
+    data: { code: 'GEN-701', name: 'Backup Generator #701', categoryId: genCat.id, siteId: dcPretoria.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Caterpillar', modelNumber: 'CAT-3512', serialNumber: 'CT-998877', installationDate: new Date('2020-08-20'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
   // ---------------------------------------------------------
@@ -150,19 +150,19 @@ async function main() {
   // ---------------------------------------------------------
   console.log('Creating Maintenance Programs...');
   const progHvac = await prisma.maintenanceProgram.create({
-    data: { title: 'Monthly HVAC Inspection', frequencyDays: 30, assetId: hvacA.id }
+    data: { title: 'Monthly HVAC Inspection', frequencyDays: 30, scheduleType: 'MONTHLY', assetId: hvacA.id }
   });
 
   const progGen = await prisma.maintenanceProgram.create({
-    data: { title: 'Quarterly Generator Service', frequencyDays: 90, assetId: gen303.id }
+    data: { title: 'Quarterly Generator Service', frequencyDays: 90, scheduleType: 'MONTHLY', assetId: gen303.id }
   });
 
   const progElec = await prisma.maintenanceProgram.create({
-    data: { title: 'Annual Electrical Audit', frequencyDays: 365, assetId: elecPanel501.id }
+    data: { title: 'Annual Electrical Audit', frequencyDays: 365, scheduleType: 'ANNUAL', assetId: elecPanel501.id }
   });
 
   const progPump = await prisma.maintenanceProgram.create({
-    data: { title: 'Monthly Pump Inspection', frequencyDays: 30, assetId: pump601.id }
+    data: { title: 'Weekly Pump Inspection', frequencyDays: 7, scheduleType: 'WEEKLY', assetId: pump601.id }
   });
 
   // ---------------------------------------------------------
@@ -282,10 +282,10 @@ async function main() {
   console.log('Creating Reliability Metrics...');
   await prisma.reliabilityMetric.createMany({
     data: [
-      { assetId: gen303.id, mtbf: 4000.5, mttr: 4.2, availability: 99.8, downtime: 12.5 },
-      { assetId: hvacA.id, mtbf: 2500.0, mttr: 8.0, availability: 98.5, downtime: 45.0 },
-      { assetId: elecPanel501.id, mtbf: 8760.0, mttr: 2.0, availability: 99.9, downtime: 2.0 },
-      { assetId: pump601.id, mtbf: 1500.0, mttr: 6.5, availability: 95.0, downtime: 120.0 },
+      { assetId: gen303.id, mtbf: 4000.5, mttr: 4.2, failureRate: 0.00025, oee: 89.5, availability: 99.8, downtime: 12.5 },
+      { assetId: hvacA.id, mtbf: 2500.0, mttr: 8.0, failureRate: 0.0004, oee: 82.1, availability: 98.5, downtime: 45.0 },
+      { assetId: elecPanel501.id, mtbf: 8760.0, mttr: 2.0, failureRate: 0.0001, oee: 98.2, availability: 99.9, downtime: 2.0 },
+      { assetId: pump601.id, mtbf: 1500.0, mttr: 6.5, failureRate: 0.00067, oee: 75.4, availability: 95.0, downtime: 120.0 },
     ]
   });
 

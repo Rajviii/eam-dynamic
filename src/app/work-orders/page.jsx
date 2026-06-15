@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
 
 // Kanban Column Component
 function KanbanColumn({ title, count, colorClass, borderClass, targetStatus, onDropCard, children }) {
@@ -352,42 +354,47 @@ export default function WorkOrdersPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. Fix HVAC" />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Asset</label>
-                <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="" disabled>Select Asset</option>
-                  {assets.map(a => (
-                    <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="DRAFT">Draft</option>
-                  <option value="ASSIGNED">Assigned</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="APPROVED">Waiting Parts (Approved)</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
-                <select value={formData.priority} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
-                </select>
-              </div>
+              <Input
+                label="Title"
+                required
+                type="text"
+                value={formData.title}
+                onChange={e => setFormData({...formData, title: e.target.value})}
+                placeholder="e.g. Fix HVAC"
+              />
+              <Select
+                label="Asset"
+                required
+                value={formData.assetId}
+                onChange={e => setFormData({...formData, assetId: e.target.value})}
+              >
+                <option value="" disabled>Select Asset</option>
+                {assets.map(a => (
+                  <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                ))}
+              </Select>
+              <Select
+                label="Status"
+                value={formData.status}
+                onChange={e => setFormData({...formData, status: e.target.value})}
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="ASSIGNED">Assigned</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="APPROVED">Waiting Parts (Approved)</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CLOSED">Closed</option>
+              </Select>
+              <Select
+                label="Priority"
+                value={formData.priority}
+                onChange={e => setFormData({...formData, priority: e.target.value})}
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </Select>
 
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">

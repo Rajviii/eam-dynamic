@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
+import Input from '../../components/ui/Input';
 
 export default function InventoryPage() {
   const { data: inventory, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/inventory', initialSortBy: 'partNumber' });
@@ -180,36 +181,61 @@ export default function InventoryPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Part Number / Code</label>
-                <input required type="text" value={formData.partNumber} onChange={e => setFormData({...formData, partNumber: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. PRT-1001" />
-              </div>
+              <Input
+                label="Part Number / Code"
+                required
+                type="text"
+                value={formData.partNumber}
+                onChange={e => setFormData({...formData, partNumber: e.target.value})}
+                placeholder="e.g. PRT-1001"
+              />
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description / Name</label>
-                <input required type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. Standard Air Filter" />
+              <Input
+                label="Description / Name"
+                required
+                type="text"
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                placeholder="e.g. Standard Air Filter"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Quantity On Hand"
+                  required
+                  type="number"
+                  min="0"
+                  value={formData.onHand}
+                  onChange={e => setFormData({...formData, onHand: e.target.value})}
+                />
+                <Input
+                  label="Unit Cost ($)"
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.unitCost}
+                  onChange={e => setFormData({...formData, unitCost: e.target.value})}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity On Hand</label>
-                  <input required type="number" min="0" value={formData.onHand} onChange={e => setFormData({...formData, onHand: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unit Cost ($)</label>
-                  <input required type="number" min="0" step="0.01" value={formData.unitCost} onChange={e => setFormData({...formData, unitCost: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Reorder Point</label>
-                  <input required type="number" min="0" value={formData.reorderPoint} onChange={e => setFormData({...formData, reorderPoint: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Min Stock Level</label>
-                  <input required type="number" min="0" value={formData.minStockLevel} onChange={e => setFormData({...formData, minStockLevel: e.target.value})} className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
+                <Input
+                  label="Reorder Point"
+                  required
+                  type="number"
+                  min="0"
+                  value={formData.reorderPoint}
+                  onChange={e => setFormData({...formData, reorderPoint: e.target.value})}
+                />
+                <Input
+                  label="Min Stock Level"
+                  required
+                  type="number"
+                  min="0"
+                  value={formData.minStockLevel}
+                  onChange={e => setFormData({...formData, minStockLevel: e.target.value})}
+                />
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3">
