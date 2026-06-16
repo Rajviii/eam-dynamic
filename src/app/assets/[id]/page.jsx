@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import { 
+  Calendar, 
+  User, 
+  Clock, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Eye, 
+  FileText, 
+  RefreshCw, 
+  Layers, 
+  ShieldAlert
+} from 'lucide-react';
 
 export default function AssetDetailsPage() {
   const router = useRouter();
@@ -18,10 +30,37 @@ export default function AssetDetailsPage() {
   const [sites, setSites] = useState([]);
   const [formData, setFormData] = useState({});
 
+  // For Work Orders Tab
+  const [workOrders, setWorkOrders] = useState([]);
+  const [woLoading, setWoLoading] = useState(false);
+  const [includeChildren, setIncludeChildren] = useState(true);
+  const [selectedWo, setSelectedWo] = useState(null);
+
   useEffect(() => {
     fetchAsset();
     fetchDropdowns();
   }, [params.id]);
+
+  useEffect(() => {
+    if (activeTab === 'Work Orders') {
+      fetchWorkOrders();
+    }
+  }, [activeTab, includeChildren, params.id]);
+
+  const fetchWorkOrders = async () => {
+    setWoLoading(true);
+    try {
+      const res = await fetch(`/api/assets/${params.id}/work-orders?rollup=${includeChildren}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWorkOrders(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch work orders:', err);
+    } finally {
+      setWoLoading(false);
+    }
+  };
 
   const fetchAsset = async () => {
     try {
@@ -284,13 +323,330 @@ export default function AssetDetailsPage() {
           )}
 
           {activeTab === 'Work Orders' && (
-            <div className="text-slate-500 text-center py-10">
-              Work orders history will be displayed here.
+            <div className="space-y-6 animate-fadeIn">
+              {/* Header Controls */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <FileText size={18} className="text-blue-500" />
+                    Maintenance & Work History
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Track all maintenance operations, corrective actions, and scheduled preventive tasks.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 self-stretch sm:self-auto justify-between sm:justify-end">
+                  <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <input 
+                      type="checkbox" 
+                      checked={includeChildren}
+                      onChange={(e) => setIncludeChildren(e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
+                    />
+                    <span className="flex items-center gap-1.5 select-none">
+                      <Layers size={14} className="text-slate-400" />
+                      Include Child Assets
+                    </span>
+                  </label>
+                  <button 
+                    onClick={fetchWorkOrders} 
+                    disabled={woLoading}
+                    className="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-800"
+                    title="Refresh history"
+                  >
+                    <RefreshCw size={14} className={woLoading ? "animate-spin" : ""} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Panel */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-50/50 dark:bg-slate-800/20 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/40">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Tasks</span>
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white mt-1 block">{workOrders.length}</span>
+                </div>
+                <div className="bg-blue-50/30 dark:bg-blue-950/10 p-4 rounded-xl border border-blue-100/40 dark:border-blue-900/20">
+                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">Active Tasks</span>
+                  <span className="text-2xl font-bold text-blue-700 dark:text-blue-400 mt-1 block">
+                    {workOrders.filter(wo => ['DRAFT', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_PARTS'].includes(wo.status)).length}
+                  </span>
+                </div>
+                <div className="bg-purple-50/30 dark:bg-purple-950/10 p-4 rounded-xl border border-purple-100/40 dark:border-purple-900/20">
+                  <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">Waiting Parts</span>
+                  <span className="text-2xl font-bold text-purple-700 dark:text-purple-400 mt-1 block font-mono">
+                    {workOrders.filter(wo => wo.status === 'WAITING_PARTS').length}
+                  </span>
+                </div>
+                <div className="bg-green-50/30 dark:bg-green-950/10 p-4 rounded-xl border border-green-100/40 dark:border-green-900/20">
+                  <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider block">Completed</span>
+                  <span className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1 block font-mono">
+                    {workOrders.filter(wo => ['COMPLETED', 'CLOSED'].includes(wo.status)).length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Loader / Content */}
+              {woLoading ? (
+                <div className="text-center py-20 text-slate-500 animate-pulse flex flex-col items-center justify-center gap-2">
+                  <RefreshCw size={24} className="animate-spin text-blue-500" />
+                  <span>Fetching maintenance records...</span>
+                </div>
+              ) : workOrders.length === 0 ? (
+                <div className="text-center py-16 bg-slate-50/50 dark:bg-slate-800/10 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                  <FileText size={40} className="mx-auto text-slate-300 dark:text-slate-700 mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400 font-medium">No work orders recorded for this asset.</p>
+                  <p className="text-xs text-slate-400 mt-1">Create a work order in the Work Orders section to see it here.</p>
+                </div>
+              ) : (
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-slate-900">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
+                      <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th className="px-5 py-3.5 font-medium">WO ID</th>
+                          <th className="px-5 py-3.5 font-medium">Title</th>
+                          {includeChildren && <th className="px-5 py-3.5 font-medium">Asset Unit</th>}
+                          <th className="px-5 py-3.5 font-medium">Assigned To</th>
+                          <th className="px-5 py-3.5 font-medium">Due Date</th>
+                          <th className="px-5 py-3.5 font-medium">Priority</th>
+                          <th className="px-5 py-3.5 font-medium">Status</th>
+                          <th className="px-5 py-3.5 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                        {workOrders.map(wo => {
+                          const isChildAsset = wo.assetId !== asset.id;
+                          return (
+                            <tr 
+                              key={wo.id} 
+                              className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                              onClick={() => setSelectedWo(wo)}
+                            >
+                              <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100 font-mono text-xs">
+                                {wo.woNumber?.startsWith('WO-') ? wo.woNumber : `WO-${wo.id.substring(0, 6).toUpperCase()}`}
+                              </td>
+                              <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
+                                {wo.title}
+                              </td>
+                              {includeChildren && (
+                                <td className="px-5 py-4 text-xs">
+                                  {isChildAsset ? (
+                                    <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded font-medium border border-slate-200 dark:border-slate-700">
+                                      <Layers size={10} className="text-blue-500" />
+                                      {wo.asset?.name}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 italic">Self</span>
+                                  )}
+                                </td>
+                              )}
+                              <td className="px-5 py-4">
+                                {wo.assignedTo ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[9px] font-bold">
+                                      {wo.assignedTo.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                                    </div>
+                                    <span className="text-slate-700 dark:text-slate-300 text-xs">{wo.assignedTo.name}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 italic text-xs">Unassigned</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs">
+                                {wo.dueDate ? new Date(wo.dueDate).toLocaleDateString() : '-'}
+                              </td>
+                              <td className="px-5 py-4">
+                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                                  wo.priority === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400' :
+                                  wo.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400' :
+                                  wo.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400' :
+                                  'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                  {wo.priority}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  wo.status === 'DRAFT' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400' :
+                                  wo.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' :
+                                  wo.status === 'IN_PROGRESS' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400' :
+                                  wo.status === 'WAITING_PARTS' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400' :
+                                  wo.status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400' :
+                                  'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                  {wo.status.replace('_', ' ')}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                <button 
+                                  onClick={() => setSelectedWo(wo)}
+                                  className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                  title="View Work Order details"
+                                >
+                                  <Eye size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
         </div>
       </div>
+
+      {/* Work Order Details Modal */}
+      {selectedWo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <div>
+                <span className="text-xs uppercase font-mono tracking-wider text-slate-400 block">
+                  Work Order Detail
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 mt-0.5">
+                  {selectedWo.woNumber?.startsWith('WO-') ? selectedWo.woNumber : `WO-${selectedWo.id.substring(0, 6).toUpperCase()}`}
+                </h2>
+              </div>
+              <button 
+                onClick={() => setSelectedWo(null)} 
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Header Title */}
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{selectedWo.title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                  {selectedWo.description || "No description provided."}
+                </p>
+              </div>
+
+              {/* Status and Priority Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/50 dark:bg-slate-800/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                <div>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Status</span>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {selectedWo.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Priority</span>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                    {selectedWo.priority}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Work Type</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1 block">
+                    {selectedWo.workType || 'Corrective'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Due Date</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1 block flex items-center gap-1">
+                    <Calendar size={12} className="text-slate-400" />
+                    {selectedWo.dueDate ? new Date(selectedWo.dueDate).toLocaleDateString() : '-'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Asset and Assignee */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Asset Location</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedWo.asset?.name}</span>
+                  <span className="text-xs text-slate-400 block mt-0.5">Code: {selectedWo.asset?.code}</span>
+                </div>
+                <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Assigned Technician</span>
+                  {selectedWo.assignedTo ? (
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedWo.assignedTo.name}</span>
+                      <span className="text-xs text-slate-400 block mt-0.5">{selectedWo.assignedTo.role}</span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic text-sm">Unassigned</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Effort & Planning Hours */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
+                  <span className="text-xs text-slate-500 uppercase font-semibold block">Estimated Effort</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-1 block">
+                    {selectedWo.estimatedHours ? `${selectedWo.estimatedHours} hrs` : '--'}
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
+                  <span className="text-xs text-slate-500 uppercase font-semibold block">Actual Effort</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-1 block">
+                    {selectedWo.actualHours ? `${selectedWo.actualHours} hrs` : '--'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Completion Notes or Failure Reason */}
+              {(selectedWo.completionNotes || selectedWo.failureCause || selectedWo.rootCause) && (
+                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Resolution & Cause Analysis</h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    {selectedWo.completionNotes && (
+                      <div className="bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <span className="text-xs font-semibold text-slate-500 uppercase">Completion Notes</span>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">{selectedWo.completionNotes}</p>
+                      </div>
+                    )}
+                    {(selectedWo.failureCause || selectedWo.rootCause) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedWo.failureCause && (
+                          <div className="bg-red-50/20 dark:bg-red-950/10 p-3 rounded-lg border border-red-100/30 dark:border-red-900/10">
+                            <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase">Failure Cause</span>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">{selectedWo.failureCause}</p>
+                          </div>
+                        )}
+                        {selectedWo.rootCause && (
+                          <div className="bg-orange-50/20 dark:bg-orange-950/10 p-3 rounded-lg border border-orange-100/30 dark:border-orange-900/10">
+                            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase">Root Cause (RCA)</span>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">{selectedWo.rootCause}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center shrink-0">
+              <button 
+                onClick={() => {
+                  setSelectedWo(null);
+                  router.push(`/work-orders`);
+                }}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                Go to Work Orders Planner &rarr;
+              </button>
+              <button 
+                onClick={() => setSelectedWo(null)} 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

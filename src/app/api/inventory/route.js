@@ -16,19 +16,23 @@ export async function GET(request) {
       ? { [sortBy]: sortOrder } 
       : { code: sortOrder };
 
-    const where = search ? {
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { code: { contains: search, mode: 'insensitive' } },
-      ]
-    } : {};
+    const where = {
+      isDeleted: false,
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { code: { contains: search, mode: 'insensitive' } },
+        ]
+      } : {})
+    };
 
     const [parts, total] = await Promise.all([
       prisma.inventoryPart.findMany({
         where,
         skip,
         take: limit,
-        orderBy
+        orderBy,
+        include: { category: true }
       }),
       prisma.inventoryPart.count({ where })
     ]);
@@ -38,13 +42,12 @@ export async function GET(request) {
       if (part.quantityOnHand === 0) status = 'Out of Stock';
       else if (part.quantityOnHand <= part.reorderLevel) status = 'Low Stock';
 
-      const categoryMock = part.name.split(' ')[0] + 's';
-
       return {
         id: part.id,
         partNumber: part.code,
         description: part.name,
-        category: categoryMock,
+        category: part.category ? part.category.name : 'General',
+        categoryId: part.categoryId,
         onHand: part.quantityOnHand,
         reorderPoint: part.reorderLevel,
         minStockLevel: part.minStockLevel,
@@ -73,6 +76,7 @@ export async function POST(request) {
       data: {
         code: data.partNumber,
         name: data.description,
+        categoryId: data.categoryId || null,
         quantityOnHand: parseInt(data.onHand) || 0,
         reorderLevel: parseInt(data.reorderPoint) || 0,
         minStockLevel: parseInt(data.minStockLevel) || 0,

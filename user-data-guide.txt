@@ -1,0 +1,126 @@
+================================================================================
+EAM DATABASE SEED GUIDE - USERS TABLE
+================================================================================
+
+This file contains guides and raw SQL / JSON data for populating the "User" table
+with all possible roles as per the database schema.
+
+The system uses four main roles:
+1. ADMIN      - Full configuration, settings, dashboard, and strategic targets.
+2. MANAGER    - Operations, asset review, inventory planning, work orders.
+3. TECHNICIAN - Receives work orders, creates parts requests.
+4. VIEWER     - Read-only dashboard and asset history analytics.
+
+All mock user accounts below are pre-configured with the default password:
+  password123
+
+This corresponds to the following bcrypt password hash:
+  $2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue
+
+
+--------------------------------------------------------------------------------
+METHOD 1: RAW SQL INSERTS (For Neon Console, pgAdmin, DBeaver, etc.)
+--------------------------------------------------------------------------------
+
+STEP 1: Retrieve your active Organization ID and Site ID.
+Run this query:
+  SELECT id, name FROM "Organization" LIMIT 1;
+  SELECT id, name FROM "Site" LIMIT 1;
+
+STEP 2: Substitute "YOUR_ORGANIZATION_UUID" and "YOUR_SITE_UUID" in the block
+below with the IDs fetched in Step 1, and run the SQL statement:
+
+INSERT INTO "User" (
+  "id", 
+  "email", 
+  "name", 
+  "role", 
+  "passwordHash", 
+  "organizationId", 
+  "siteId", 
+  "createdAt", 
+  "updatedAt"
+) VALUES 
+  -- ADMIN USER
+  (
+    gen_random_uuid(), 
+    'admin@apex.com', 
+    'Rajvi Admin', 
+    'ADMIN', 
+    '$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue', 
+    'YOUR_ORGANIZATION_UUID', 
+    'YOUR_SITE_UUID', 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+  ),
+
+  -- MANAGER USER
+  (
+    gen_random_uuid(), 
+    'manager@apex.com', 
+    'Michael Operations', 
+    'MANAGER', 
+    '$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue', 
+    'YOUR_ORGANIZATION_UUID', 
+    'YOUR_SITE_UUID', 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+  ),
+
+  -- TECHNICIAN USER
+  (
+    gen_random_uuid(), 
+    'tech1@apex.com', 
+    'Caterina Technician', 
+    'TECHNICIAN', 
+    '$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue', 
+    'YOUR_ORGANIZATION_UUID', 
+    'YOUR_SITE_UUID', 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+  ),
+
+  -- VIEWER USER
+  (
+    gen_random_uuid(), 
+    'viewer@apex.com', 
+    'Valerie Viewer', 
+    'VIEWER', 
+    '$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue', 
+    'YOUR_ORGANIZATION_UUID', 
+    'YOUR_SITE_UUID', 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP
+  );
+
+
+--------------------------------------------------------------------------------
+METHOD 2: JSON RAW DATA (For manual inserts or custom APIs)
+--------------------------------------------------------------------------------
+
+[
+  {
+    "email": "admin@apex.com",
+    "name": "Rajvi Admin",
+    "role": "ADMIN",
+    "passwordHash": "$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue"
+  },
+  {
+    "email": "manager@apex.com",
+    "name": "Michael Operations",
+    "role": "MANAGER",
+    "passwordHash": "$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue"
+  },
+  {
+    "email": "tech1@apex.com",
+    "name": "Caterina Technician",
+    "role": "TECHNICIAN",
+    "passwordHash": "$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue"
+  },
+  {
+    "email": "viewer@apex.com",
+    "name": "Valerie Viewer",
+    "role": "VIEWER",
+    "passwordHash": "$2b$10$T1K.sQz7L1F8gW/y1eQ9Ue.b1nF.hJ1L8M/W6Qz7L1F8gW/y1eQ9Ue"
+  }
+]

@@ -76,6 +76,21 @@ export default function AssetManagementPlanPage() {
     }
   };
 
+  const handleGeneratePMs = async () => {
+    try {
+      const res = await fetch('/api/cron/generate-pms');
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Successfully triggered PM generation. ${data.message}`);
+      } else {
+        alert(`Failed to generate PMs: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error triggering PM generation');
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -93,6 +108,12 @@ export default function AssetManagementPlanPage() {
             <option value="FY 2025">FY 2025</option>
             <option value="FY 2024">FY 2024</option>
           </Select>
+          <button 
+            onClick={handleGeneratePMs}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            Run PM Generator
+          </button>
           <button 
             onClick={handleOpenModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"

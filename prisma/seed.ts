@@ -13,324 +13,304 @@ const {
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting EAM Database Seeding...');
+  console.log('🌱 Starting Ivjar Manufacturing EAM Database Seeding...');
 
-  // ---------------------------------------------------------
+  // Wipe existing database to ensure clean seed
+  console.log('Wiping existing database tables...');
+  await prisma.notification.deleteMany({});
+  await prisma.auditLog.deleteMany({});
+  await prisma.failureEvent.deleteMany({});
+  await prisma.riskAssessment.deleteMany({});
+  await prisma.workOrderPart.deleteMany({});
+  await prisma.assetHistory.deleteMany({});
+  await prisma.assetDocument.deleteMany({});
+  await prisma.assetCriticality.deleteMany({});
+  await prisma.maintenanceProgram.deleteMany({});
+  await prisma.workOrder.deleteMany({});
+  await prisma.asset.deleteMany({});
+  await prisma.assetCategory.deleteMany({});
+  await prisma.reliabilityMetric.deleteMany({});
+  await prisma.inventoryPart.deleteMany({});
+  await prisma.partCategory.deleteMany({});
+  await prisma.vendor.deleteMany({});
+  await prisma.strategicTarget.deleteMany({});
+  await prisma.technician.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.site.deleteMany({});
+  await prisma.organization.deleteMany({});
+  console.log('Database wiped successfully!');
+
   // 1. ORGANIZATION
-  // ---------------------------------------------------------
   console.log('Creating Organization...');
   const org = await prisma.organization.create({
-    data: { name: 'Johannesburg Manufacturing LTD' },
+    data: { name: 'Ivjar Global Manufacturing' },
   });
 
-  // ---------------------------------------------------------
   // 2. SITES
-  // ---------------------------------------------------------
   console.log('Creating Sites...');
   await prisma.site.createMany({
     data: [
-      { name: 'Johannesburg Plant A', location: 'Johannesburg, ZA', organizationId: org.id },
-      { name: 'Johannesburg Plant B', location: 'Johannesburg, ZA', organizationId: org.id },
-      { name: 'Pretoria Distribution Center', location: 'Pretoria, ZA', organizationId: org.id },
+      { name: 'Ivjar Main Assembly Plant', location: 'Detroit, MI', organizationId: org.id },
+      { name: 'Ivjar Packaging & Distribution', location: 'Columbus, OH', organizationId: org.id },
     ],
   });
 
-  const plantA = await prisma.site.findFirst({ where: { name: 'Johannesburg Plant A' } });
-  const plantB = await prisma.site.findFirst({ where: { name: 'Johannesburg Plant B' } });
-  const dcPretoria = await prisma.site.findFirst({ where: { name: 'Pretoria Distribution Center' } });
+  const plantA = await prisma.site.findFirst({ where: { name: 'Ivjar Main Assembly Plant' } });
+  const plantB = await prisma.site.findFirst({ where: { name: 'Ivjar Packaging & Distribution' } });
 
-  // ---------------------------------------------------------
-  // 3. USERS
-  // ---------------------------------------------------------
+  // 3. USERS (Every possible role is represented)
   console.log('Creating Users...');
   await prisma.user.createMany({
     data: [
-      { email: 'rajvi.admin@example.com', name: 'Rajvi Admin', role: Role.ADMIN, organizationId: org.id, siteId: plantA.id },
-      { email: 'michael.ops@example.com', name: 'Michael Operations Manager', role: Role.MANAGER, organizationId: org.id, siteId: plantA.id },
-      { email: 'ariana.maint@example.com', name: 'Ariana Maintenance Manager', role: Role.MANAGER, organizationId: org.id, siteId: plantA.id },
-      { email: 'caterina.tech@example.com', name: 'Caterina Technician', role: Role.TECHNICIAN, organizationId: org.id, siteId: plantA.id },
-      { email: 'linom.tech@example.com', name: 'Linom Technician', role: Role.TECHNICIAN, organizationId: org.id, siteId: plantB.id },
-      { email: 'glinda.viewer@example.com', name: 'Glinda Viewer', role: Role.VIEWER, organizationId: org.id, siteId: dcPretoria.id },
+      { email: 'admin@ivjar.com', name: 'Rajvi Admin', role: Role.ADMIN, organizationId: org.id, siteId: plantA.id },
+      { email: 'manager@ivjar.com', name: 'Michael Operations', role: Role.MANAGER, organizationId: org.id, siteId: plantA.id },
+      { email: 'tech1@ivjar.com', name: 'Caterina Technician', role: Role.TECHNICIAN, organizationId: org.id, siteId: plantA.id },
+      { email: 'tech2@ivjar.com', name: 'Linom Technician', role: Role.TECHNICIAN, organizationId: org.id, siteId: plantA.id },
+      { email: 'viewer@ivjar.com', name: 'Valerie Viewer', role: Role.VIEWER, organizationId: org.id, siteId: plantA.id },
     ],
   });
 
-  const techCaterina = await prisma.user.findUnique({ where: { email: 'caterina.tech@example.com' } });
-  const techLinom = await prisma.user.findUnique({ where: { email: 'linom.tech@example.com' } });
-  const adminRajvi = await prisma.user.findUnique({ where: { email: 'rajvi.admin@example.com' } });
+  const techCaterinaUser = await prisma.user.findUnique({ where: { email: 'tech1@ivjar.com' } });
+  const techLinomUser = await prisma.user.findUnique({ where: { email: 'tech2@ivjar.com' } });
+  const adminRajvi = await prisma.user.findUnique({ where: { email: 'admin@ivjar.com' } });
 
-  // ---------------------------------------------------------
+  console.log('Creating Technicians...');
+  await prisma.technician.createMany({
+    data: [
+      { technicianCode: 'TECH-001', name: 'Caterina Technician', email: 'tech1@ivjar.com', role: 'Mechanical', status: 'ACTIVE' },
+      { technicianCode: 'TECH-002', name: 'Linom Technician', email: 'tech2@ivjar.com', role: 'Electrical', status: 'ACTIVE' },
+    ]
+  });
+
+  const techCaterina = await prisma.technician.findUnique({ where: { technicianCode: 'TECH-001' } });
+  const techLinom = await prisma.technician.findUnique({ where: { technicianCode: 'TECH-002' } });
+
   // 4. ASSET CATEGORIES
-  // ---------------------------------------------------------
   console.log('Creating Asset Categories...');
   await prisma.assetCategory.createMany({
     data: [
-      { name: 'HVAC', description: 'Heating, Ventilation, and Air Conditioning Systems' },
-      { name: 'Generator', description: 'Power Generation Units' },
-      { name: 'Electrical', description: 'Electrical Distribution and Control' },
-      { name: 'Mechanical', description: 'Mechanical Systems and Compressors' },
-      { name: 'Utility', description: 'Water, Gas, and Utility Pumps' },
+      { name: 'Robotics', description: 'Automated assembly and welding robots' },
+      { name: 'Conveyor', description: 'Material handling systems' },
+      { name: 'HVAC', description: 'Facility climate control' },
+      { name: 'Power Gen', description: 'Backup power systems' },
     ],
   });
 
-  const hvacCat = await prisma.assetCategory.findUnique({ where: { name: 'HVAC' } });
-  const genCat = await prisma.assetCategory.findUnique({ where: { name: 'Generator' } });
-  const elecCat = await prisma.assetCategory.findUnique({ where: { name: 'Electrical' } });
-  const mechCat = await prisma.assetCategory.findUnique({ where: { name: 'Mechanical' } });
-  const utilCat = await prisma.assetCategory.findUnique({ where: { name: 'Utility' } });
+  const catRobotics = await prisma.assetCategory.findUnique({ where: { name: 'Robotics' } });
+  const catConveyor = await prisma.assetCategory.findUnique({ where: { name: 'Conveyor' } });
+  const catHvac = await prisma.assetCategory.findUnique({ where: { name: 'HVAC' } });
+  const catPower = await prisma.assetCategory.findUnique({ where: { name: 'Power Gen' } });
 
-  // ---------------------------------------------------------
+  // 4.5 PART CATEGORIES
+  console.log('Creating Part Categories...');
+  await prisma.partCategory.createMany({
+    data: [
+      { name: 'Servos', description: 'Servo motors and related drives' },
+      { name: 'Hydraulics', description: 'Hydraulic fluids, valves, pumps' },
+      { name: 'Conveyors', description: 'Conveyor belts, links, guides' },
+      { name: 'Lithiums', description: 'Lithium battery packs and chargers' },
+      { name: 'Airs', description: 'Air filters and pneumatic parts' },
+    ]
+  });
+
+  const catServos = await prisma.partCategory.findUnique({ where: { name: 'Servos' } });
+  const catHydraulics = await prisma.partCategory.findUnique({ where: { name: 'Hydraulics' } });
+  const catConveyors = await prisma.partCategory.findUnique({ where: { name: 'Conveyors' } });
+  const catLithiums = await prisma.partCategory.findUnique({ where: { name: 'Lithiums' } });
+  const catAirs = await prisma.partCategory.findUnique({ where: { name: 'Airs' } });
+
   // 5. VENDORS
-  // ---------------------------------------------------------
   console.log('Creating Vendors...');
-  const vendorsToCreate = [
-    { name: 'Siemens', type: VendorType.ASSET_VENDOR },
-    { name: 'ABB', type: VendorType.SERVICE_PROVIDER },
-    { name: 'Schneider Electric', type: VendorType.PARTS_VENDOR },
-    { name: 'Carrier HVAC Services', type: VendorType.SERVICE_PROVIDER },
-  ];
-
-  for (const v of vendorsToCreate) {
-    await prisma.vendor.create({ data: v });
-  }
-
-  const siemens = await prisma.vendor.findFirst({ where: { name: 'Siemens' } });
-  const schneider = await prisma.vendor.findFirst({ where: { name: 'Schneider Electric' } });
-  const carrier = await prisma.vendor.findFirst({ where: { name: 'Carrier HVAC Services' } });
-
-  // ---------------------------------------------------------
-  // 6. ASSETS & HIERARCHY
-  // ---------------------------------------------------------
-  console.log('Creating Assets & Hierarchy...');
-
-  // Johannesburg Plant A Assets
-  const hvacA = await prisma.asset.create({
-    data: { code: 'HVAC-A-01', name: 'HVAC System A', categoryId: hvacCat.id, siteId: plantA.id, vendorId: carrier.id, imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Carrier', modelNumber: 'CHVAC-2000', serialNumber: 'CA-987654321', installationDate: new Date('2020-03-15'), criticality: { create: { safetyImpact: 3, environmentalImpact: 2, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
+  await prisma.vendor.createMany({
+    data: [
+      { name: 'KUKA Robotics', type: VendorType.ASSET_VENDOR },
+      { name: 'Siemens Systems', type: VendorType.SERVICE_PROVIDER },
+      { name: 'Industrial Parts Co', type: VendorType.PARTS_VENDOR },
+    ]
   });
 
-  const comp101 = await prisma.asset.create({
-    data: { code: 'COMP-101', name: 'Compressor #101', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, imageUrl: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Ingersoll Rand', modelNumber: 'UP6-15', serialNumber: 'IR-112233', installationDate: new Date('2021-06-10'), criticality: { create: { safetyImpact: 2, environmentalImpact: 1, productionImpact: 3, financialImpact: 3, overallScore: 3, classification: 'MEDIUM' } } }
+  const vendorKuka = await prisma.vendor.findFirst({ where: { name: 'KUKA Robotics' } });
+  const vendorParts = await prisma.vendor.findFirst({ where: { name: 'Industrial Parts Co' } });
+
+  // 6. ASSETS (Exactly one asset per category to avoid duplicates)
+  console.log('Creating Assets...');
+  const conveyorLine = await prisma.asset.create({
+    data: { code: 'CONV-ALPHA', name: 'Production Line Alpha', categoryId: catConveyor.id, siteId: plantA.id, status: 'OPERATIONAL', criticality: { create: { safetyImpact: 3, environmentalImpact: 1, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
-  const filter102 = await prisma.asset.create({
-    data: { code: 'FLTR-102', name: 'Air Filter #102', categoryId: mechCat.id, siteId: plantA.id, parentId: hvacA.id, manufacturer: 'Donaldson', modelNumber: 'P182054', serialNumber: 'DN-554433', installationDate: new Date('2022-01-20'), criticality: { create: { safetyImpact: 1, environmentalImpact: 1, productionImpact: 1, financialImpact: 1, overallScore: 1, classification: 'LOW' } } }
+  const robotA = await prisma.asset.create({
+    data: { code: 'ROB-KUKA-A', name: 'KUKA Welding Robot A', categoryId: catRobotics.id, siteId: plantA.id, parentId: conveyorLine.id, vendorId: vendorKuka.id, imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070', status: 'DEGRADED', criticality: { create: { safetyImpact: 4, environmentalImpact: 1, productionImpact: 5, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
   });
 
-  const gen303 = await prisma.asset.create({
-    data: { code: 'GEN-303', name: 'Generator #303', categoryId: genCat.id, siteId: plantA.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Siemens', modelNumber: 'SGE-1M', serialNumber: 'SG-9988776655', installationDate: new Date('2019-11-05'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
+  const chiller = await prisma.asset.create({
+    data: { code: 'CHILL-100', name: 'Chiller Unit 1', categoryId: catHvac.id, siteId: plantA.id, status: 'UNDER_MAINTENANCE', criticality: { create: { safetyImpact: 2, environmentalImpact: 3, productionImpact: 3, financialImpact: 3, overallScore: 3, classification: 'MEDIUM' } } }
   });
 
-  const elecPanel501 = await prisma.asset.create({
-    data: { code: 'ELEC-501', name: 'Electrical Panel #501', categoryId: elecCat.id, siteId: plantA.id, vendorId: schneider.id, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2069&auto=format&fit=crop', manufacturer: 'Schneider Electric', modelNumber: 'SQD-200A', serialNumber: 'SE-334455', installationDate: new Date('2018-08-22'), criticality: { create: { safetyImpact: 5, environmentalImpact: 3, productionImpact: 5, financialImpact: 4, overallScore: 5, classification: 'CRITICAL' } } }
+  const generator = await prisma.asset.create({
+    data: { code: 'GEN-500KVA', name: 'Backup Generator 500kVA', categoryId: catPower.id, siteId: plantA.id, status: 'OPERATIONAL', criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
   });
 
-  // Johannesburg Plant B Assets
-  const hvacB = await prisma.asset.create({
-    data: { code: 'HVAC-B-01', name: 'HVAC System B', categoryId: hvacCat.id, siteId: plantB.id, vendorId: carrier.id, imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Carrier', modelNumber: 'CHVAC-2000', serialNumber: 'CA-123456789', installationDate: new Date('2020-05-18'), criticality: { create: { safetyImpact: 3, environmentalImpact: 2, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
+  // 7. INVENTORY PARTS (Exactly one part per category)
+  console.log('Creating Inventory...');
+  await prisma.inventoryPart.createMany({
+    data: [
+      { code: 'PRT-SM-04', name: 'Servo Motor MK4', categoryId: catServos.id, quantityOnHand: 2, minStockLevel: 5, reorderLevel: 10, cost: 4500.0, siteId: plantA.id, vendorId: vendorParts.id }, // LOW STOCK
+      { code: 'PRT-HF-50', name: 'Hydraulic Fluid 50L', categoryId: catHydraulics.id, quantityOnHand: 15, minStockLevel: 10, reorderLevel: 20, cost: 250.0, siteId: plantA.id },
+      { code: 'PRT-CB-11', name: 'Conveyor Belt Link', categoryId: catConveyors.id, quantityOnHand: 150, minStockLevel: 50, reorderLevel: 100, cost: 45.0, siteId: plantA.id },
+      { code: 'PRT-AF-PRO', name: 'Air Filter Pro', categoryId: catAirs.id, quantityOnHand: 8, minStockLevel: 10, reorderLevel: 20, cost: 120.0, siteId: plantA.id }, // LOW STOCK
+      { code: 'PRT-BAT-LI', name: 'Lithium Battery Pack', categoryId: catLithiums.id, quantityOnHand: 5, minStockLevel: 5, reorderLevel: 10, cost: 800.0, siteId: plantA.id },
+    ]
   });
 
-  const comp201 = await prisma.asset.create({
-    data: { code: 'COMP-201', name: 'Compressor #201', categoryId: mechCat.id, siteId: plantB.id, parentId: hvacB.id, manufacturer: 'Ingersoll Rand', modelNumber: 'UP6-15', serialNumber: 'IR-445566', installationDate: new Date('2021-07-15'), criticality: { create: { safetyImpact: 2, environmentalImpact: 1, productionImpact: 3, financialImpact: 3, overallScore: 3, classification: 'MEDIUM' } } }
+  const partServo = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-SM-04' } });
+  const partFluid = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-HF-50' } });
+  const partLink = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-CB-11' } });
+  const partFilter = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-AF-PRO' } });
+
+  // 8. MAINTENANCE PROGRAMS
+  console.log('Creating Programs...');
+  await prisma.maintenanceProgram.create({
+    data: { title: 'Weekly Robot Calibration', frequencyDays: 7, scheduleType: 'WEEKLY', assetId: robotA.id }
+  });
+  await prisma.maintenanceProgram.create({
+    data: { title: 'Monthly Chiller Inspection', frequencyDays: 30, scheduleType: 'MONTHLY', assetId: chiller.id }
   });
 
-  const gen403 = await prisma.asset.create({
-    data: { code: 'GEN-403', name: 'Generator #403', categoryId: genCat.id, siteId: plantB.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Siemens', modelNumber: 'SGE-1M', serialNumber: 'SG-1122334455', installationDate: new Date('2019-12-10'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
-  });
+  // 9. WORK ORDERS & PART REQUESTS
+  console.log('Creating Work Orders...');
 
-  // Pretoria DC Assets
-  const pump601 = await prisma.asset.create({
-    data: { code: 'PUMP-601', name: 'Water Pump #601', categoryId: utilCat.id, siteId: dcPretoria.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop', manufacturer: 'Grundfos', modelNumber: 'CR-32', serialNumber: 'GF-667788', installationDate: new Date('2022-03-05'), criticality: { create: { safetyImpact: 2, environmentalImpact: 3, productionImpact: 4, financialImpact: 4, overallScore: 4, classification: 'HIGH' } } }
-  });
-
-  const gen701 = await prisma.asset.create({
-    data: { code: 'GEN-701', name: 'Backup Generator #701', categoryId: genCat.id, siteId: dcPretoria.id, vendorId: siemens.id, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop', manufacturer: 'Caterpillar', modelNumber: 'CAT-3512', serialNumber: 'CT-998877', installationDate: new Date('2020-08-20'), criticality: { create: { safetyImpact: 5, environmentalImpact: 4, productionImpact: 5, financialImpact: 5, overallScore: 5, classification: 'CRITICAL' } } }
-  });
-
-  // ---------------------------------------------------------
-  // 7. MAINTENANCE PROGRAMS
-  // ---------------------------------------------------------
-  console.log('Creating Maintenance Programs...');
-  const progHvac = await prisma.maintenanceProgram.create({
-    data: { title: 'Monthly HVAC Inspection', frequencyDays: 30, scheduleType: 'MONTHLY', assetId: hvacA.id }
-  });
-
-  const progGen = await prisma.maintenanceProgram.create({
-    data: { title: 'Quarterly Generator Service', frequencyDays: 90, scheduleType: 'MONTHLY', assetId: gen303.id }
-  });
-
-  const progElec = await prisma.maintenanceProgram.create({
-    data: { title: 'Annual Electrical Audit', frequencyDays: 365, scheduleType: 'ANNUAL', assetId: elecPanel501.id }
-  });
-
-  const progPump = await prisma.maintenanceProgram.create({
-    data: { title: 'Weekly Pump Inspection', frequencyDays: 7, scheduleType: 'WEEKLY', assetId: pump601.id }
-  });
-
-  // ---------------------------------------------------------
-  // 8. INVENTORY PARTS
-  // ---------------------------------------------------------
-  console.log('Creating Inventory Parts...');
-  const partsData = [
-    { code: 'PRT-AF01', name: 'Air Filter', quantityOnHand: 50, minStockLevel: 10, reorderLevel: 20, cost: 45.0, siteId: plantA.id, vendorId: schneider.id },
-    { code: 'PRT-BK01', name: 'Bearing Kit', quantityOnHand: 15, minStockLevel: 5, reorderLevel: 10, cost: 120.0, siteId: plantA.id, vendorId: siemens.id },
-    { code: 'PRT-LO01', name: 'Lubricant Oil', quantityOnHand: 100, minStockLevel: 20, reorderLevel: 40, cost: 15.5, siteId: plantA.id },
-    { code: 'PRT-GB01', name: 'Generator Battery', quantityOnHand: 8, minStockLevel: 2, reorderLevel: 5, cost: 250.0, siteId: plantA.id, vendorId: siemens.id },
-    { code: 'PRT-CF01', name: 'Cooling Fan', quantityOnHand: 12, minStockLevel: 4, reorderLevel: 8, cost: 85.0, siteId: plantB.id },
-    { code: 'PRT-MB01', name: 'Motor Belt', quantityOnHand: 30, minStockLevel: 10, reorderLevel: 15, cost: 35.0, siteId: plantB.id },
-    { code: 'PRT-EF01', name: 'Electrical Fuse', quantityOnHand: 200, minStockLevel: 50, reorderLevel: 100, cost: 5.0, siteId: plantA.id, vendorId: schneider.id },
-    { code: 'PRT-PS01', name: 'Pump Seal', quantityOnHand: 25, minStockLevel: 5, reorderLevel: 10, cost: 55.0, siteId: dcPretoria.id },
-  ];
-
-  await prisma.inventoryPart.createMany({ data: partsData });
-
-  const pAirFilter = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-AF01' } });
-  const pLubeOil = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-LO01' } });
-  const pGenBattery = await prisma.inventoryPart.findUnique({ where: { code: 'PRT-GB01' } });
-
-  // ---------------------------------------------------------
-  // 9. WORK ORDERS & WORK ORDER PARTS
-  // ---------------------------------------------------------
-  console.log('Creating Work Orders and Consuming Parts...');
-
-  // 8 Completed Work Orders
-  for (let i = 1; i <= 8; i++) {
-    const wo = await prisma.workOrder.create({
-      data: {
-        title: `Completed Work Order ${i}`,
-        description: 'Routine maintenance completed successfully.',
-        status: WorkOrderStatus.COMPLETED,
-        priority: WorkOrderPriority.MEDIUM,
-        assetId: i % 2 === 0 ? gen303.id : hvacA.id,
-        maintenanceProgramId: i % 2 === 0 ? progGen.id : progHvac.id,
-        assignedToId: i % 2 === 0 ? techCaterina.id : techLinom.id,
-        siteId: plantA.id,
-        actualStartDate: new Date(Date.now() - i * 86400000), // i days ago
-        actualEndDate: new Date(Date.now() - (i - 0.5) * 86400000),
-      }
-    });
-
-    // Parts consumption
-    if (wo.assetId === gen303.id) {
-      await prisma.workOrderPart.create({ data: { workOrderId: wo.id, inventoryPartId: pLubeOil.id, quantityConsumed: 2 } });
-      if (i === 2) {
-        await prisma.workOrderPart.create({ data: { workOrderId: wo.id, inventoryPartId: pGenBattery.id, quantityConsumed: 1 } });
-      }
-    } else if (wo.assetId === hvacA.id) {
-      await prisma.workOrderPart.create({ data: { workOrderId: wo.id, inventoryPartId: pAirFilter.id, quantityConsumed: 1 } });
+  // Completed WO with consumed parts
+  const wo1 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-1001',
+      title: 'Replace worn conveyor links',
+      description: 'Found several degraded links during visual inspection.',
+      status: WorkOrderStatus.COMPLETED,
+      priority: WorkOrderPriority.MEDIUM,
+      assetId: conveyorLine.id,
+      assignedToId: techLinom.id,
+      siteId: plantA.id,
+      actualHours: 2.5,
+      actualStartDate: new Date(Date.now() - 2 * 86400000),
+      actualEndDate: new Date(Date.now() - 1.5 * 86400000),
     }
-  }
+  });
+  await prisma.workOrderPart.create({
+    data: { workOrderId: wo1.id, inventoryPartId: partLink.id, requestedQty: 5, issuedQty: 5, quantityConsumed: 5, requestStatus: 'CONSUMED', requestedById: techLinomUser.id }
+  });
+  await prisma.assetHistory.create({
+    data: { assetId: conveyorLine.id, action: 'MAINTENANCE_COMPLETED', description: `Replaced 5 conveyor links.`, performedById: techLinomUser.id }
+  });
 
-  // 4 In Progress
-  for (let i = 1; i <= 4; i++) {
-    await prisma.workOrder.create({
-      data: {
-        title: `In Progress Work Order ${i}`,
-        status: WorkOrderStatus.IN_PROGRESS,
-        priority: WorkOrderPriority.HIGH,
-        assetId: elecPanel501.id,
-        assignedToId: techCaterina.id,
-        siteId: plantA.id,
-        actualStartDate: new Date(),
-      }
-    });
-  }
+  // Waiting Parts WO 1 (Robot)
+  const wo2 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-1002',
+      title: 'Robot A Arm Actuator Failure',
+      description: 'Actuator is jamming. Needs new servo motor.',
+      status: WorkOrderStatus.WAITING_PARTS,
+      priority: WorkOrderPriority.CRITICAL,
+      assetId: robotA.id,
+      assignedToId: techCaterina.id,
+      siteId: plantA.id,
+      actualStartDate: new Date(),
+    }
+  });
+  await prisma.workOrderPart.create({
+    data: { workOrderId: wo2.id, inventoryPartId: partServo.id, requestedQty: 1, requestStatus: 'REQUESTED', requestedById: techCaterinaUser.id }
+  });
 
-  // 3 Assigned
-  for (let i = 1; i <= 3; i++) {
-    await prisma.workOrder.create({
-      data: {
-        title: `Assigned Work Order ${i}`,
-        status: WorkOrderStatus.ASSIGNED,
-        priority: WorkOrderPriority.LOW,
-        assetId: pump601.id,
-        maintenanceProgramId: progPump.id,
-        assignedToId: techLinom.id,
-        siteId: dcPretoria.id,
-      }
-    });
-  }
+  // Waiting Parts WO 2 (Chiller)
+  const wo3 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-1003',
+      title: 'Chiller Unit 1 Overheating',
+      description: 'Filters are completely blocked. Need replacements before restart.',
+      status: WorkOrderStatus.WAITING_PARTS,
+      priority: WorkOrderPriority.HIGH,
+      assetId: chiller.id,
+      assignedToId: techLinom.id,
+      siteId: plantA.id,
+      actualStartDate: new Date(),
+    }
+  });
+  await prisma.workOrderPart.create({
+    data: { workOrderId: wo3.id, inventoryPartId: partFilter.id, requestedQty: 2, requestStatus: 'REQUESTED', requestedById: techLinomUser.id }
+  });
 
-  // 2 Draft
-  for (let i = 1; i <= 2; i++) {
-    await prisma.workOrder.create({
-      data: {
-        title: `Draft Work Order ${i}`,
-        status: WorkOrderStatus.DRAFT,
-        priority: WorkOrderPriority.MEDIUM,
-        assetId: gen403.id,
-        siteId: plantB.id,
-      }
-    });
-  }
+  // In Progress WO (Robot A Arm Fluid change)
+  const wo4 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-1004',
+      title: 'Routine Hydraulic Fluid change',
+      description: 'Flushing and replacing fluid.',
+      status: WorkOrderStatus.IN_PROGRESS,
+      priority: WorkOrderPriority.MEDIUM,
+      assetId: robotA.id,
+      assignedToId: techCaterina.id,
+      siteId: plantA.id,
+      actualStartDate: new Date(),
+    }
+  });
+  await prisma.workOrderPart.create({
+    data: { workOrderId: wo4.id, inventoryPartId: partFluid.id, requestedQty: 1, issuedQty: 1, requestStatus: 'ISSUED', requestedById: techCaterinaUser.id, issuedById: adminRajvi.id }
+  });
 
-  // ---------------------------------------------------------
-  // 10. RISK ASSESSMENTS
-  // ---------------------------------------------------------
-  console.log('Creating Risk Assessments...');
-  const riskData = [
-    { assetId: gen303.id, probability: 4, impact: 5, riskScore: 20, mitigationPlan: 'Install redundant backup and schedule quarterly checks', assessedById: adminRajvi.id },
-    { assetId: elecPanel501.id, probability: 3, impact: 5, riskScore: 15, mitigationPlan: 'Add thermal monitoring sensors', assessedById: adminRajvi.id },
-    { assetId: pump601.id, probability: 2, impact: 3, riskScore: 6, mitigationPlan: 'Regular seal replacement', assessedById: techLinom.id },
-  ];
+  // Draft WO
+  await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-1005',
+      title: 'Generator Test Run',
+      description: 'Monthly load bank test.',
+      status: WorkOrderStatus.DRAFT,
+      priority: WorkOrderPriority.LOW,
+      assetId: generator.id,
+      siteId: plantA.id,
+    }
+  });
 
-  for (const risk of riskData) {
-    await prisma.riskAssessment.create({ data: risk });
-  }
+  // 9.5 FAILURE EVENTS
+  console.log('Creating Failure Events...');
+  await prisma.failureEvent.create({
+    data: {
+      assetId: robotA.id,
+      workOrderId: wo2.id,
+      description: 'Actuator jamming on axis 3',
+      occurredAt: new Date(Date.now() - 3 * 86400000),
+      resolvedAt: new Date(Date.now() - 2.8 * 86400000),
+      downtimeHours: 4.8
+    }
+  });
 
-  // ---------------------------------------------------------
-  // 11. RELIABILITY METRICS
-  // ---------------------------------------------------------
-  console.log('Creating Reliability Metrics...');
+  await prisma.failureEvent.create({
+    data: {
+      assetId: chiller.id,
+      workOrderId: wo3.id,
+      description: 'Chiller compressor overheating alarm',
+      occurredAt: new Date(Date.now() - 1 * 86400000),
+      resolvedAt: new Date(Date.now() - 0.7 * 86400000),
+      downtimeHours: 7.2
+    }
+  });
+
+  // 10. RISK & RELIABILITY
+  console.log('Creating Risk & Reliability Data...');
+  await prisma.riskAssessment.create({
+    data: { assetId: robotA.id, probability: 4, impact: 4, riskScore: 16, mitigationPlan: 'Increase calibration frequency and keep servo spares on hand.', assessedById: adminRajvi.id }
+  });
+  await prisma.riskAssessment.create({
+    data: { assetId: generator.id, probability: 2, impact: 5, riskScore: 10, mitigationPlan: 'Ensure fuel polishing is done bi-annually.', assessedById: adminRajvi.id }
+  });
+
   await prisma.reliabilityMetric.createMany({
     data: [
-      { assetId: gen303.id, mtbf: 4000.5, mttr: 4.2, failureRate: 0.00025, oee: 89.5, availability: 99.8, downtime: 12.5 },
-      { assetId: hvacA.id, mtbf: 2500.0, mttr: 8.0, failureRate: 0.0004, oee: 82.1, availability: 98.5, downtime: 45.0 },
-      { assetId: elecPanel501.id, mtbf: 8760.0, mttr: 2.0, failureRate: 0.0001, oee: 98.2, availability: 99.9, downtime: 2.0 },
-      { assetId: pump601.id, mtbf: 1500.0, mttr: 6.5, failureRate: 0.00067, oee: 75.4, availability: 95.0, downtime: 120.0 },
+      { assetId: robotA.id, mtbf: 1200.0, mttr: 4.5, availability: 96.5, downtime: 36.0 },
+      { assetId: conveyorLine.id, mtbf: 4000.0, mttr: 2.1, availability: 99.1, downtime: 12.0 },
+      { assetId: chiller.id, mtbf: 2500.0, mttr: 8.0, availability: 94.5, downtime: 80.0 },
     ]
   });
 
-  // ---------------------------------------------------------
-  // 12. ASSET HISTORY
-  // ---------------------------------------------------------
-  console.log('Creating Asset History...');
-  const assetsForHistory = [hvacA, gen303, elecPanel501, gen403];
-  for (const asset of assetsForHistory) {
-    // 1. Created
-    await prisma.assetHistory.create({
-      data: { assetId: asset.id, action: 'ASSET_CREATED', description: `Initial system creation for ${asset.code}`, performedById: adminRajvi.id }
-    });
-    // 2. Inspection
-    await prisma.assetHistory.create({
-      data: { assetId: asset.id, action: 'INSPECTION_COMPLETED', description: `Routine visual inspection passed`, performedById: techCaterina.id }
-    });
-    // 3. Status Changed
-    await prisma.assetHistory.create({
-      data: { assetId: asset.id, action: 'STATUS_CHANGED', description: `Status set to OPERATIONAL`, performedById: adminRajvi.id }
-    });
-    // 4. Maintenance
-    await prisma.assetHistory.create({
-      data: { assetId: asset.id, action: 'MAINTENANCE_COMPLETED', description: `Routine PM tasks performed`, performedById: techLinom.id }
-    });
-    // 5. Audit
-    await prisma.assetHistory.create({
-      data: { assetId: asset.id, action: 'AUDIT_LOG', description: `Automated monitoring recorded baseline metrics`, performedById: null }
-    });
-  }
-
-  // ---------------------------------------------------------
-  // 13. ASSET DOCUMENTS
-  // ---------------------------------------------------------
-  console.log('Creating Asset Documents...');
-  await prisma.assetDocument.createMany({
-    data: [
-      { assetId: hvacA.id, title: 'HVAC User Manual', url: 'https://docs.eam-demo.com/hvac/manual.pdf' },
-      { assetId: gen303.id, title: 'Generator Maintenance Guide', url: 'https://docs.eam-demo.com/gen/maint-guide.pdf' },
-      { assetId: elecPanel501.id, title: 'Electrical Panel Schematic', url: 'https://docs.eam-demo.com/elec/schematic-501.pdf' },
-      { assetId: pump601.id, title: 'Pump Service Manual', url: 'https://docs.eam-demo.com/pump/service-manual.pdf' },
-    ]
-  });
-
-  console.log('✅ Seeding Complete!');
+  console.log('✅ Ivjar Manufacturing Seeding Complete!');
 }
 
 main()

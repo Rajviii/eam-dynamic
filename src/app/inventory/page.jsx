@@ -5,20 +5,36 @@ import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
 import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
 
 export default function InventoryPage() {
   const { data: inventory, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/inventory', initialSortBy: 'partNumber' });
+
+  // Categories List state
+  const [categories, setCategories] = useState([]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetch('/api/settings/part-categories?limit=100')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          setCategories(data.data);
+        }
+      })
+      .catch(err => console.error('Failed to fetch part categories', err));
+  }, []);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [formData, setFormData] = useState({
-    id: '', partNumber: '', description: '', onHand: 0, reorderPoint: 0, minStockLevel: 0, unitCost: 0
+    id: '', partNumber: '', description: '', categoryId: '', onHand: 0, reorderPoint: 0, minStockLevel: 0, unitCost: 0
   });
 
   const openAddModal = () => {
     setModalMode('add');
-    setFormData({ id: '', partNumber: '', description: '', onHand: 0, reorderPoint: 0, minStockLevel: 0, unitCost: 0 });
+    setFormData({ id: '', partNumber: '', description: '', categoryId: categories[0]?.id || '', onHand: 0, reorderPoint: 0, minStockLevel: 0, unitCost: 0 });
     setIsModalOpen(true);
   };
 
@@ -28,6 +44,7 @@ export default function InventoryPage() {
       id: part.id,
       partNumber: part.partNumber,
       description: part.description,
+      categoryId: part.categoryId || '',
       onHand: part.onHand,
       reorderPoint: part.reorderPoint,
       minStockLevel: part.minStockLevel || 0,
@@ -198,6 +215,18 @@ export default function InventoryPage() {
                 onChange={e => setFormData({...formData, description: e.target.value})}
                 placeholder="e.g. Standard Air Filter"
               />
+
+              <Select
+                label="Category"
+                required
+                value={formData.categoryId}
+                onChange={e => setFormData({...formData, categoryId: e.target.value})}
+              >
+                <option value="" disabled>Select a category...</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </Select>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input

@@ -1,0 +1,41 @@
+Error: Command failed: "C:\nvm4w\nodejs\node.exe" "C:\Users\Admin\Documents\Rajvi_Test\eam-dynamic\node_modules\prisma\build\index.js" db push --accept-data-loss
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Loaded Prisma config from prisma.config.ts.
+
+warn The Prisma config file in prisma.config.ts overrides the deprecated `package.json#prisma` property in package.json.
+  For more information, see: https://pris.ly/prisma-config
+
+Prisma config detected, skipping environment variable loading.
+Error: insert or update on table "WorkOrder" violates foreign key constraint "WorkOrder_assignedToId_fkey"
+   0: sql_schema_connector::apply_migration::migration_step
+           with step=AddForeignKey { foreign_key_id: ForeignKeyId(15) }
+             at schema-engine\connectors\sql-schema-connector\src\apply_migration.rs:28
+   1: sql_schema_connector::apply_migration::apply_migration
+             at schema-engine\connectors\sql-schema-connector\src\apply_migration.rs:11
+   2: schema_core::state::SchemaPush
+             at schema-engine\core\src\state.rs:515
+
+
+STDOUT: Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-patient-bread-atd0ita3-pooler.c-9.us-east-1.aws.neon.tech"
+
+STDERR: warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Loaded Prisma config from prisma.config.ts.
+
+warn The Prisma config file in prisma.config.ts overrides the deprecated `package.json#prisma` property in package.json.
+  For more information, see: https://pris.ly/prisma-config
+
+Prisma config detected, skipping environment variable loading.
+Error: insert or update on table "WorkOrder" violates foreign key constraint "WorkOrder_assignedToId_fkey"
+   0: sql_schema_connector::apply_migration::migration_step
+           with step=AddForeignKey { foreign_key_id: ForeignKeyId(15) }
+             at schema-engine\connectors\sql-schema-connector\src\apply_migration.rs:28
+   1: sql_schema_connector::apply_migration::apply_migration
+             at schema-engine\connectors\sql-schema-connector\src\apply_migration.rs:11
+   2: schema_core::state::SchemaPush
+             at schema-engine\core\src\state.rs:515
+

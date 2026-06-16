@@ -7,7 +7,7 @@ const HierarchyNode = ({ node, isRoot = false }) => {
   const [isExpanded, setIsExpanded] = useState(isRoot || node.type === 'plant');
 
   const getIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'root': return <div className="w-5 h-5 bg-slate-800 text-white rounded flex items-center justify-center text-[10px] font-bold">O</div>;
       case 'plant': return <div className="w-5 h-5 bg-blue-600 text-white rounded flex items-center justify-center text-[10px] font-bold">P</div>;
       case 'line': return <div className="w-5 h-5 bg-orange-500 text-white rounded flex items-center justify-center text-[10px] font-bold">L</div>;
@@ -23,12 +23,12 @@ const HierarchyNode = ({ node, isRoot = false }) => {
       <div className={`flex items-center py-2 px-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg group transition-colors ${isRoot ? 'bg-slate-50 dark:bg-slate-800/50 font-semibold' : ''}`}>
         <div className="flex items-center gap-2 w-full">
           {isExpandable ? (
-            <button 
+            <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
             >
-              {isExpanded ? 
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg> : 
+              {isExpanded ?
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg> :
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               }
             </button>
@@ -39,13 +39,13 @@ const HierarchyNode = ({ node, isRoot = false }) => {
           <span className={`text-sm text-slate-800 dark:text-slate-200 truncate ${node.type === 'asset' ? 'group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer' : ''}`}>
             {node.id !== node.name && node.id.includes('-') ? `${node.id} - ` : ''}{node.name}
           </span>
-          
+
           <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></button>
           </div>
         </div>
       </div>
-      
+
       {isExpandable && isExpanded && (
         <div className="ml-6 pl-2 border-l border-slate-200 dark:border-slate-700 mt-1 flex flex-col gap-1">
           {node.children.map((child, idx) => (
@@ -88,9 +88,9 @@ export default function AssetHierarchyPage() {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Asset Hierarchy</h1>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Search hierarchy..." 
+            <input
+              type="text"
+              placeholder="Search hierarchy..."
               className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg pl-10 pr-4 py-2 focus:ring-blue-500 focus:border-blue-500 block w-64"
             />
             <svg className="w-4 h-4 text-slate-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -124,7 +124,7 @@ export default function AssetHierarchyPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-1">ABC Manufacturing (All Sites)</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Top level organizational view</p>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30">
                 <div className="text-sm text-slate-500 mb-1">Total Assets</div>

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const totalAssets = await prisma.asset.count();
+    const totalAssets = await prisma.asset.count({ where: { isDeleted: false } });
     
     // Total Open Work Orders
     const openWorkOrders = await prisma.workOrder.count({
@@ -17,6 +17,7 @@ export async function GET() {
     // Critical Assets Count
     const criticalAssetsAtRiskCount = await prisma.asset.count({
       where: {
+        isDeleted: false,
         criticality: {
           classification: 'CRITICAL'
         }
@@ -24,10 +25,10 @@ export async function GET() {
     });
 
     // Asset Health Overview (Simulated mapping based on existing schema)
-    const excellent = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticality: { classification: { in: ['LOW', 'MEDIUM'] } } } });
-    const good = await prisma.asset.count({ where: { status: 'OPERATIONAL', criticality: { classification: { in: ['HIGH', 'CRITICAL'] } } } });
-    const warning = await prisma.asset.count({ where: { status: 'DEGRADED' } });
-    const critical = await prisma.asset.count({ where: { status: { in: ['UNDER_MAINTENANCE', 'DECOMMISSIONED'] } } });
+    const excellent = await prisma.asset.count({ where: { isDeleted: false, status: 'OPERATIONAL', criticality: { classification: { in: ['LOW', 'MEDIUM'] } } } });
+    const good = await prisma.asset.count({ where: { isDeleted: false, status: 'OPERATIONAL', criticality: { classification: { in: ['HIGH', 'CRITICAL'] } } } });
+    const warning = await prisma.asset.count({ where: { isDeleted: false, status: 'DEGRADED' } });
+    const critical = await prisma.asset.count({ where: { isDeleted: false, status: { in: ['UNDER_MAINTENANCE', 'DECOMMISSIONED'] } } });
 
     // Work Orders Grouped By Status
     const woStatusGroup = await prisma.workOrder.groupBy({
@@ -38,13 +39,16 @@ export async function GET() {
       draft: woStatusGroup.find(g => g.status === 'DRAFT')?._count || 0,
       assigned: woStatusGroup.find(g => g.status === 'ASSIGNED')?._count || 0,
       inProgress: woStatusGroup.find(g => g.status === 'IN_PROGRESS')?._count || 0,
-      waitingParts: woStatusGroup.find(g => g.status === 'APPROVED')?._count || 0,
+      waitingParts: woStatusGroup.find(g => g.status === 'WAITING_PARTS')?._count || 0,
       completed: woStatusGroup.find(g => ['COMPLETED', 'CLOSED'].includes(g.status))?._count || 0,
     };
 
     // Critical Assets at Risk List
     const topCriticalAssets = await prisma.asset.findMany({
-      where: { criticality: { classification: { in: ['HIGH', 'CRITICAL'] } } },
+      where: {
+        isDeleted: false,
+        criticality: { classification: { in: ['HIGH', 'CRITICAL'] } }
+      },
       take: 5,
       include: { riskAssessments: true, criticality: true }
     });
@@ -123,6 +127,18 @@ export async function GET() {
     const maintenanceCost = 285000;
     const assetAvailability = 95.2;
 
+    // Inventory Metrics
+    const lowStockInventory = await prisma.inventoryPart.count({
+      where: {
+        isDeleted: false,
+        quantityOnHand: { lt: prisma.inventoryPart.fields.minStockLevel }
+      }
+    });
+
+    const openPartRequests = await prisma.workOrderPart.count({
+      where: { requestStatus: { in: ['REQUESTED', 'APPROVED'] } }
+    });
+
     const data = {
       totalAssets,
       assetAvailability,
@@ -138,7 +154,9 @@ export async function GET() {
       woStatuses,
       criticalAssetsList,
       upcomingMaintenance,
-      riskMatrix
+      riskMatrix,
+      lowStockInventory,
+      openPartRequests
     };
 
     return NextResponse.json(data);

@@ -6,7 +6,7 @@ export async function GET() {
     // 1. Fetch all sites (roots)
     const sites = await prisma.site.findMany();
     // 2. Fetch all assets
-    const assets = await prisma.asset.findMany();
+    const assets = await prisma.asset.findMany({ where: { isDeleted: false } });
 
     // Map sites to root nodes
     const hierarchy = sites.map(site => {

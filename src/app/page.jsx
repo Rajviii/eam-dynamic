@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Select from '../components/ui/Select';
+import { useAuth } from '../contexts/AuthContext';
 
 // Reusable KPI Widget Component
 function MetricWidget({ title, value, subtext, trend, trendUp }) {
@@ -113,6 +114,71 @@ function RiskHeatmap({ matrixData }) {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+
+  if (!user) return <div className="p-8 text-center">Loading user context...</div>;
+
+  if (user.role === 'TECHNICIAN') {
+    return <TechnicianDashboard user={user} />;
+  }
+
+  return <AdminDashboard user={user} />;
+}
+
+function TechnicianDashboard({ user }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/dashboard/technician')
+      .then(res => res.json())
+      .then(data => {
+        setStats(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading technician dashboard...</div>;
+  if (!stats) return <div className="p-8 text-center text-red-500">Failed to load technician metrics.</div>;
+
+  return (
+    <div className="space-y-6 pb-10">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">My Workspace</h1>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricWidget title="My Assigned Work Orders" value={stats.assignedWorkOrders} />
+        <MetricWidget title="My PM Tasks" value={stats.pmTasks} />
+        <MetricWidget title="Work Due Today" value={stats.dueToday} trend={stats.overdue > 0 ? `${stats.overdue} Overdue` : 'On Track'} trendUp={stats.overdue === 0} />
+        <MetricWidget title="Unread Notifications" value={stats.unreadNotifications} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+          <h3 className="text-slate-800 dark:text-slate-100 font-semibold mb-4">My Priority Tasks</h3>
+          <div className="flex-1 space-y-2">
+            {stats.recentWorkOrders?.length > 0 ? stats.recentWorkOrders.map(wo => (
+              <div key={wo.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{wo.title}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{wo.woNumber} • {wo.asset?.name || 'No Asset'}</div>
+                </div>
+                <span className={`text-xs font-bold ${wo.priority === 'CRITICAL' ? 'text-red-500' : 'text-orange-500'}`}>{wo.status}</span>
+              </div>
+            )) : <p className="text-sm text-slate-500 italic">No tasks assigned.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminDashboard({ user }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -178,12 +244,14 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <MetricWidget title="Total Assets" value={stats.totalAssets} trend="12.5%" trendUp={true} subtext="vs last month" />
         <MetricWidget title="Asset Availability" value={`${stats.assetAvailability}%`} trend="2.4%" trendUp={true} subtext="vs last month" />
         <MetricWidget title="Open Work Orders" value={stats.openWorkOrders} trend="5" trendUp={false} subtext="Overdue" />
         <MetricWidget title="Critical Assets at Risk" value={stats.criticalAssetsAtRisk} trend="2" trendUp={false} subtext="High Risk" />
         <MetricWidget title="Maintenance Cost (YTD)" value={`$${(stats.maintenanceCost / 1000).toFixed(0)}K`} trend="8.7%" trendUp={false} subtext="vs last month" />
+        <MetricWidget title="Open Part Requests" value={stats.openPartRequests} trend="Needs Review" trendUp={false} subtext="Action Required" />
+        <MetricWidget title="Low Stock Items" value={stats.lowStockInventory} trend="Reorder" trendUp={false} subtext="Check Inventory" />
       </div>
 
       {/* Row 2: Charts & Missing Sections */}

@@ -25,34 +25,38 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
     const skip = (page - 1) * limit;
+    const query = searchParams.get('query') || '';
+
+    const where = {
+      isDeleted: false,
+      ...(query ? {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { code: { contains: query, mode: 'insensitive' } }
+        ]
+      } : {})
+    };
 
     const assets = await prisma.asset.findMany({
       skip,
       take: limit,
+      where,
       include: {
         site: { select: { name: true } },
         category: { select: { name: true } },
-        criticality: true,
-        reliabilityMetrics: {
-          orderBy: { recordedAt: 'desc' },
-          take: 1
-        }
+        criticality: true
       },
       orderBy: { code: 'asc' }
     });
 
-    const total = await prisma.asset.count();
+    const total = await prisma.asset.count({ where });
 
     const formattedAssets = assets.map(asset => {
       let healthScore = 'N/A';
-      if (asset.reliabilityMetrics && asset.reliabilityMetrics.length > 0) {
-        healthScore = asset.reliabilityMetrics[0].healthScore;
-      } else {
-        if (asset.status === 'OPERATIONAL') healthScore = 95;
-        else if (asset.status === 'DEGRADED') healthScore = 70;
-        else if (asset.status === 'UNDER_MAINTENANCE') healthScore = 40;
-        else if (asset.status === 'DECOMMISSIONED') healthScore = 0;
-      }
+      if (asset.status === 'OPERATIONAL') healthScore = 95;
+      else if (asset.status === 'DEGRADED') healthScore = 70;
+      else if (asset.status === 'UNDER_MAINTENANCE') healthScore = 40;
+      else if (asset.status === 'DECOMMISSIONED') healthScore = 0;
 
       return {
         id: asset.id,

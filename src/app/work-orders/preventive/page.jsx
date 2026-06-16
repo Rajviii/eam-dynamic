@@ -13,7 +13,6 @@ export default function PreventiveMaintenancePage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [assets, setAssets] = useState([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -21,33 +20,31 @@ export default function PreventiveMaintenancePage() {
     assetId: '',
     frequencyDays: 30,
     scheduleType: 'MONTHLY',
-    nextDueDate: format(new Date(), 'yyyy-MM-dd')
+    nextDueDate: format(new Date(), 'yyyy-MM-dd'),
+    technicianId: '',
+    workType: 'Preventive Maintenance',
+    priority: 'MEDIUM',
   });
+  const [technicians, setTechnicians] = useState([]);
 
   useEffect(() => {
     fetchPrograms();
-    fetchAssets();
   }, []);
 
   const fetchPrograms = async () => {
     try {
-      const res = await fetch('/api/maintenance-programs');
+      const [res, techRes] = await Promise.all([
+        fetch('/api/maintenance-programs'),
+        fetch('/api/technicians?limit=100')
+      ]);
       const data = await res.json();
+      const techData = await techRes.json();
       setPrograms(Array.isArray(data) ? data : []);
+      setTechnicians(techData.data || []);
       setLoading(false);
     } catch (err) {
       console.error(err);
       setLoading(false);
-    }
-  };
-
-  const fetchAssets = async () => {
-    try {
-      const res = await fetch('/api/assets');
-      const data = await res.json();
-      setAssets(data.data || []);
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -252,9 +249,9 @@ export default function PreventiveMaintenancePage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 rounded-t-xl">
               <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Create PM Strategy</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -272,14 +269,10 @@ export default function PreventiveMaintenancePage() {
               <Select
                 label="Target Asset"
                 required
+                apiEndpoint="/api/assets"
                 value={formData.assetId}
                 onChange={e => setFormData({ ...formData, assetId: e.target.value })}
-              >
-                <option value="">Select Asset...</option>
-                {assets.map(a => (
-                  <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
-                ))}
-              </Select>
+              />
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Frequency (Days)"
@@ -297,6 +290,26 @@ export default function PreventiveMaintenancePage() {
                   <option value="WEEKLY">Weekly</option>
                   <option value="MONTHLY">Monthly</option>
                   <option value="ANNUAL">Annual</option>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  label="Assigned Technician"
+                  value={formData.technicianId}
+                  onChange={e => setFormData({ ...formData, technicianId: e.target.value })}
+                >
+                  <option value="">Unassigned</option>
+                  {technicians.map(t => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
+                </Select>
+                <Select
+                  label="Priority"
+                  value={formData.priority}
+                  onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
                 </Select>
               </div>
               <Input

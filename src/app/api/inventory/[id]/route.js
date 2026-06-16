@@ -3,8 +3,9 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const part = await prisma.inventoryPart.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!part) {
@@ -20,13 +21,15 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const { id } = await params;
     const data = await request.json();
     
     const updatedPart = await prisma.inventoryPart.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         code: data.partNumber,
         name: data.description,
+        categoryId: data.categoryId || null,
         quantityOnHand: parseInt(data.onHand),
         reorderLevel: parseInt(data.reorderPoint),
         minStockLevel: parseInt(data.minStockLevel) || 0,
@@ -43,8 +46,10 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await prisma.inventoryPart.delete({
-      where: { id: params.id }
+    const { id } = await params;
+    await prisma.inventoryPart.update({
+      where: { id },
+      data: { isDeleted: true }
     });
 
     return NextResponse.json({ success: true });

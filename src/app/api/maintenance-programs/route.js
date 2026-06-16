@@ -16,7 +16,8 @@ export async function GET(request) {
       include: {
         asset: {
           select: { name: true, criticality: true, code: true }
-        }
+        },
+        technician: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -40,12 +41,16 @@ export async function POST(request) {
         scheduleType: data.scheduleType || 'MONTHLY',
         nextDueDate: data.nextDueDate ? new Date(data.nextDueDate) : null,
         assetId: data.assetId,
+        technicianId: data.technicianId || null,
+        workType: data.workType || 'Preventive Maintenance',
+        priority: data.priority || 'MEDIUM',
         isActive: data.isActive !== undefined ? data.isActive : true,
       },
       include: {
         asset: {
           select: { name: true, criticality: true, code: true }
-        }
+        },
+        technician: true
       }
     });
 

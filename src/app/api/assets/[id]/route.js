@@ -107,8 +107,9 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    await prisma.asset.delete({
-      where: { id }
+    await prisma.asset.update({
+      where: { id },
+      data: { isDeleted: true }
     });
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -13,7 +13,7 @@ function TrendChart({ data }) {
     <div className="h-48 flex items-end justify-between relative px-4 w-full">
       <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
          <polyline 
-           points={data.map((d, i) => `${(i / (data.length - 1)) * 100},${100 - d.downtime}`).join(' ')} 
+           points={data.map((d, i) => `${(i / (data.length - 1)) * 100},${100 - (d.downtime > 100 ? 100 : d.downtime)}`).join(' ')} 
            fill="none" 
            stroke="#3b82f6" 
            strokeWidth="2" 
@@ -27,14 +27,14 @@ function TrendChart({ data }) {
 }
 
 export default function ReliabilityPage() {
-  const { data: rawMetrics, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder, rawJson } = useDataTable({ endpoint: '/api/reliability', initialSortBy: 'recordedAt' });
+  const { data: failureEvents, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/failures', initialSortBy: 'occurredAt' });
+  const [aggregates, setAggregates] = useState({ mtbf: 0, mttr: 0, availability: 0, reliability: 0, downtimeTrend: [], failureFrequency: [] });
   const [assets, setAssets] = useState([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
   const [formData, setFormData] = useState({
-    id: '', assetId: '', mtbf: 0, mttr: 0, availability: 0, downtime: 0
+    assetId: '', description: '', downtimeHours: 0, occurredAt: new Date().toISOString().slice(0, 16)
   });
 
   useEffect(() => {
@@ -42,32 +42,35 @@ export default function ReliabilityPage() {
       .then(res => res.json())
       .then(aData => setAssets(aData.data || aData))
       .catch(console.error);
+    
+    fetchAggregates();
   }, []);
 
-  const openAddModal = () => {
-    setModalMode('add');
-    setFormData({ id: '', assetId: assets[0]?.id || '', mtbf: 0, mttr: 0, availability: 100, downtime: 0 });
-    setIsModalOpen(true);
+  const fetchAggregates = async () => {
+    try {
+      const res = await fetch('/api/reliability');
+      const data = await res.json();
+      if (data.aggregates) {
+        setAggregates(data.aggregates);
+      }
+    } catch (err) {
+      console.error('Error fetching aggregates:', err);
+    }
   };
 
-  const openEditModal = (metric) => {
-    setModalMode('edit');
-    setFormData({
-      id: metric.id,
-      assetId: metric.assetId,
-      mtbf: metric.mtbf,
-      mttr: metric.mttr,
-      availability: metric.availability,
-      downtime: metric.downtime
-    });
+  const openLogFailureModal = () => {
+    setFormData({ assetId: assets[0]?.id || '', description: '', downtimeHours: 0, occurredAt: new Date().toISOString().slice(0, 16) });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
+    if (!confirm('Are you sure you want to delete this log?')) return;
     try {
-      const res = await fetch(`/api/reliability/${id}`, { method: 'DELETE' });
-      if (res.ok) refresh();
+      const res = await fetch(`/api/failures/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        refresh();
+        fetchAggregates();
+      }
     } catch (err) {
       console.error(err);
     }
@@ -75,68 +78,57 @@ export default function ReliabilityPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = modalMode === 'add' ? '/api/reliability' : `/api/reliability/${formData.id}`;
-    const method = modalMode === 'add' ? 'POST' : 'PUT';
-
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch('/api/failures', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
       if (res.ok) {
         setIsModalOpen(false);
         refresh();
+        fetchAggregates();
       } else {
-        alert('Failed to save metric');
+        alert('Failed to log failure event');
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (loading && (!rawJson || rawMetrics.length === 0)) {
-    return <div className="p-8 text-center text-slate-500 animate-pulse">Loading reliability metrics...</div>;
+  if (loading && failureEvents.length === 0) {
+    return <div className="p-8 text-center text-slate-500 animate-pulse">Loading reliability dashboard...</div>;
   }
-
-  const aggregates = rawJson?.aggregates || {
-    mtbf: 0, mttr: 0, availability: 0, reliability: 0, downtimeTrend: [], failureFrequency: []
-  };
 
   return (
     <div className="space-y-6 relative">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Reliability Metrics</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Reliability Dashboard</h1>
         <div className="flex items-center gap-3">
           <div className="relative">
             <input 
               type="text" 
               onChange={handleSearch}
-              placeholder="Search metrics..." 
+              placeholder="Search failures..." 
               className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg pl-10 pr-4 py-2 focus:ring-blue-500 focus:border-blue-500 block w-64"
             />
             <svg className="w-4 h-4 text-slate-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </div>
-          <select className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg p-2 w-48">
-            <option>Past 30 Days</option>
-            <option>Past 90 Days</option>
-            <option>Year to Date</option>
-          </select>
-          <button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-            Log Metric
+          <button onClick={openLogFailureModal} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Log Failure Event
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">MTBF (Avg Hours)</h3>
-          <div className="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-2">{aggregates.mtbf}</div>
+          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">MTBF (Calculated)</h3>
+          <div className="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-2">{aggregates.mtbf} hrs</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">MTTR (Avg Hours)</h3>
-          <div className="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-2">{aggregates.mttr}</div>
+          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">MTTR (Calculated)</h3>
+          <div className="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-2">{aggregates.mttr} hrs</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">Availability</h3>
@@ -164,7 +156,7 @@ export default function ReliabilityPage() {
                 <span className="text-slate-700 dark:text-slate-300 font-medium">{freq.asset}</span>
                 <div className="flex items-center gap-3 w-1/2">
                   <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full flex-1 overflow-hidden">
-                    <div className="h-full bg-red-500 rounded-full" style={{ width: `${(freq.count / 15) * 100}%` }}></div>
+                    <div className="h-full bg-red-500 rounded-full" style={{ width: `${Math.min(100, (freq.count / 10) * 100)}%` }}></div>
                   </div>
                   <span className="text-sm font-bold text-slate-500 w-8">{freq.count}</span>
                 </div>
@@ -179,39 +171,34 @@ export default function ReliabilityPage() {
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden mt-6">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <h3 className="font-semibold text-slate-800 dark:text-slate-100">Raw Data Records</h3>
+          <h3 className="font-semibold text-slate-800 dark:text-slate-100">Failure Event Log</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
             <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th scope="col" className="px-6 py-4 font-medium">Asset Name</th>
-                <SortableHeader label="MTBF" columnKey="mtbf" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
-                <SortableHeader label="MTTR" columnKey="mttr" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
-                <SortableHeader label="Availability %" columnKey="availability" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
-                <SortableHeader label="Downtime (Hrs)" columnKey="downtime" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
-                <SortableHeader label="Recorded At" columnKey="recordedAt" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
+                <th scope="col" className="px-6 py-4 font-medium">Asset</th>
+                <th scope="col" className="px-6 py-4 font-medium">Description</th>
+                <SortableHeader label="Occurred At" columnKey="occurredAt" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} />
+                <SortableHeader label="Downtime (Hrs)" columnKey="downtimeHours" sortBy={sortBy} sortOrder={sortOrder} handleSort={handleSort} className="text-right" />
                 <th scope="col" className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rawMetrics.map((item, index) => (
-                <tr key={item.id} className={`border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${index === rawMetrics.length - 1 ? 'border-b-0' : ''}`}>
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{item.assetName}</td>
-                  <td className="px-6 py-4 text-right">{item.mtbf}</td>
-                  <td className="px-6 py-4 text-right">{item.mttr}</td>
-                  <td className="px-6 py-4 text-right font-medium text-green-600 dark:text-green-400">{item.availability}%</td>
-                  <td className="px-6 py-4 text-right text-red-500">{item.downtime}</td>
-                  <td className="px-6 py-4 text-right text-slate-500">{new Date(item.recordedAt).toLocaleDateString()}</td>
+              {failureEvents.map((item, index) => (
+                <tr key={item.id} className={`border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${index === failureEvents.length - 1 ? 'border-b-0' : ''}`}>
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{item.assetCode} - {item.assetName}</td>
+                  <td className="px-6 py-4">{item.description}</td>
+                  <td className="px-6 py-4 text-slate-500">{new Date(item.occurredAt).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-medium text-red-500">{item.downtimeHours}</td>
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => openEditModal(item)} className="text-blue-600 dark:text-blue-400 hover:underline mr-3 text-sm">Edit</button>
                     <button onClick={() => handleDelete(item.id)} className="text-red-600 dark:text-red-400 hover:underline text-sm">Delete</button>
                   </td>
                 </tr>
               ))}
-              {rawMetrics.length === 0 && !loading && (
+              {failureEvents.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500">No raw records found. Click 'Log Metric' to create one.</td>
+                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500">No failure logs found. System running optimally.</td>
                 </tr>
               )}
             </tbody>
@@ -220,13 +207,14 @@ export default function ReliabilityPage() {
         <Pagination page={page} limit={limit} total={total} setPage={setPage} />
       </div>
 
-      {/* Slide-out Modal for Add/Edit */}
+      {/* Slide-out Modal for Log Failure */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl w-full max-w-md overflow-hidden transform transition-all">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                {modalMode === 'add' ? 'Log Metric' : 'Edit Metric'}
+              <h2 className="text-lg font-semibold text-red-600 dark:text-red-500 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Log Failure Event
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -235,7 +223,7 @@ export default function ReliabilityPage() {
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <Select
-                label="Target Asset"
+                label="Failed Asset"
                 required
                 value={formData.assetId}
                 onChange={e => setFormData({...formData, assetId: e.target.value})}
@@ -246,37 +234,22 @@ export default function ReliabilityPage() {
                 ))}
               </Select>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="MTBF (Hours)"
-                  required
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.mtbf}
-                  onChange={e => setFormData({...formData, mtbf: e.target.value})}
-                />
-                <Input
-                  label="MTTR (Hours)"
-                  required
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.mttr}
-                  onChange={e => setFormData({...formData, mttr: e.target.value})}
-                />
-              </div>
+              <Input
+                label="Description / Issue"
+                required
+                type="text"
+                placeholder="What failed?"
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+              />
               
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Availability (%)"
+                  label="Occurred At"
                   required
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={formData.availability}
-                  onChange={e => setFormData({...formData, availability: e.target.value})}
+                  type="datetime-local"
+                  value={formData.occurredAt}
+                  onChange={e => setFormData({...formData, occurredAt: e.target.value})}
                 />
                 <Input
                   label="Downtime (Hours)"
@@ -284,8 +257,8 @@ export default function ReliabilityPage() {
                   type="number"
                   step="0.1"
                   min="0"
-                  value={formData.downtime}
-                  onChange={e => setFormData({...formData, downtime: e.target.value})}
+                  value={formData.downtimeHours}
+                  onChange={e => setFormData({...formData, downtimeHours: e.target.value})}
                 />
               </div>
 
@@ -293,8 +266,8 @@ export default function ReliabilityPage() {
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                  {modalMode === 'add' ? 'Log Metric' : 'Save Changes'}
+                <button type="submit" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  Submit Failure Log
                 </button>
               </div>
             </form>
