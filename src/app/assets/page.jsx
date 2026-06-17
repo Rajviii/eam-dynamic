@@ -48,7 +48,7 @@ function AssetsList() {
             {criticality && (
               <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold px-2.5 py-1 rounded-full uppercase flex items-center gap-1.5 select-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                {criticality} Only
+                {criticality.split(',').join(' & ')} Only
                 <button 
                   onClick={() => router.push('/assets')} 
                   className="hover:text-red-950 dark:hover:text-red-200 font-bold ml-1 text-sm leading-none focus:outline-none"

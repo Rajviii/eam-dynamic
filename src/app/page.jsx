@@ -391,7 +391,7 @@ function AdminDashboard({ user }) {
               </tbody>
             </table>
           </div>
-          <Link href="/assets?criticality=CRITICAL" className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-4 hover:underline">
+          <Link href="/assets?criticality=CRITICAL,HIGH" className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-4 hover:underline">
             View all critical assets
           </Link>
         </div>

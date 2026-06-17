@@ -28,13 +28,17 @@ export async function GET(request) {
     const query = searchParams.get('query') || searchParams.get('search') || '';
     
     const validCriticalities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
-    const criticality = searchParams.get('criticality')?.toUpperCase() || '';
+    const criticalityParam = searchParams.get('criticality') || '';
+    const criticalityList = criticalityParam
+      .split(',')
+      .map(val => val.trim().toUpperCase())
+      .filter(val => validCriticalities.includes(val));
 
     const where = {
       isDeleted: false,
-      ...(validCriticalities.includes(criticality) ? {
+      ...(criticalityList.length > 0 ? {
         criticality: {
-          classification: criticality
+          classification: { in: criticalityList }
         }
       } : {}),
       ...(query ? {

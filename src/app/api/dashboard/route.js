@@ -19,7 +19,7 @@ export async function GET() {
       where: {
         isDeleted: false,
         criticality: {
-          classification: 'CRITICAL'
+          classification: { in: ['HIGH', 'CRITICAL'] }
         }
       }
     });
