@@ -95,13 +95,36 @@ export async function GET() {
       take: 5
     });
 
+    // Calculate technician workload and utilization
+    const openWOs = await prisma.workOrder.findMany({
+      where: {
+        assignedToId: technician.id,
+        status: { notIn: ['COMPLETED', 'CLOSED'] }
+      },
+      select: {
+        estimatedHours: true
+      }
+    });
+
+    const totalAssignedHours = openWOs.reduce((sum, w) => {
+      const hours = w.estimatedHours ? parseFloat(w.estimatedHours) : 2.0;
+      return sum + hours;
+    }, 0);
+
+    const shiftLimit = 8.0;
+    const remainingCapacity = Math.max(0, shiftLimit - totalAssignedHours);
+    const utilizationRate = (totalAssignedHours / shiftLimit) * 100;
+
     return NextResponse.json({
       assignedWorkOrders,
       pmTasks,
       dueToday,
       overdue,
       unreadNotifications,
-      recentWorkOrders
+      recentWorkOrders,
+      assignedHours: totalAssignedHours,
+      remainingCapacity,
+      utilizationRate
     });
 
   } catch (error) {

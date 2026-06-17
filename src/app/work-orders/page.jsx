@@ -7,7 +7,7 @@ import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 // Kanban Column Component
 function KanbanColumn({ title, count, colorClass, borderClass, targetStatus, onDropCard, children }) {
@@ -100,6 +100,10 @@ export default function WorkOrdersPage() {
     workType: 'Corrective Maintenance', dueDate: '', estimatedHours: '', actualHours: '', completionNotes: ''
   });
 
+  const isReactive = formData.workType === 'Breakdown' || formData.workType === 'Emergency' || 
+                     formData.workType === 'Corrective Maintenance' || formData.workType === 'Corrective';
+  const isHighRisk = formData.priority === 'CRITICAL' || formData.priority === 'HIGH' || isReactive;
+
   const fetchKanbanData = async () => {
     setLoading(true);
     try {
@@ -135,6 +139,33 @@ export default function WorkOrdersPage() {
     try {
       const res = await fetch(`/api/work-orders/${woId}`);
       const fullData = await res.json();
+
+      // 1. Safety Checklist validation for high priority/reactive tasks on Kanban move
+      const isHighRisk = fullData.priority === 'CRITICAL' || fullData.priority === 'HIGH' || 
+                         fullData.workType === 'Breakdown' || fullData.workType === 'Emergency' || 
+                         fullData.workType === 'Corrective Maintenance' || fullData.workType === 'Corrective';
+      const isProgressingOrClosing = ['IN_PROGRESS', 'COMPLETED', 'CLOSED'].includes(newStatus);
+      
+      if (isHighRisk && isProgressingOrClosing) {
+        const notes = fullData.completionNotes || '';
+        const hasLoto = notes.includes('[EHS Safety Checklist: LOTO=Verified, PPE=Checked]');
+        if (!hasLoto) {
+          alert("EHS Compliance Warning: You must verify all Lockout/Tagout (LOTO) safety isolation checklist items in the Edit modal before putting this high-risk work order into progress or completing/closing it.");
+          return;
+        }
+      }
+
+      // 2. Mandatory close-out validation on Kanban move
+      const isReactive = fullData.workType === 'Breakdown' || fullData.workType === 'Emergency' || 
+                         fullData.workType === 'Corrective Maintenance' || fullData.workType === 'Corrective';
+      const isClosing = ['COMPLETED', 'CLOSED'].includes(newStatus);
+      
+      if (isReactive && isClosing) {
+        if (!fullData.failureCause || !fullData.rootCause || !fullData.completionNotes) {
+          alert("ISO 55001 Compliance Warning: You must log Failure Cause, Corrective Remedy, and Completion Notes in the Edit modal before completing or closing this work order.");
+          return;
+        }
+      }
       
       const updateData = { ...fullData, status: newStatus };
 
@@ -161,7 +192,9 @@ export default function WorkOrdersPage() {
     setWoParts([]);
     setFormData({
       dbId: '', title: '', description: '', status: 'DRAFT', priority: 'MEDIUM', assetId: '', assignedToId: '',
-      workType: 'Corrective Maintenance', dueDate: '', estimatedHours: '', actualHours: '', completionNotes: ''
+      workType: 'Corrective Maintenance', dueDate: '', estimatedHours: '', actualHours: '', completionNotes: '',
+      failureClass: '', failureCause: '', rootCause: '',
+      lotoElectrical: false, lotoMechanical: false, lotoGas: false, lotoPpe: false
     });
     setIsModalOpen(true);
   };
@@ -179,6 +212,29 @@ export default function WorkOrdersPage() {
     const fullWo = await res.json();
     await loadParts(wo.dbId);
 
+    const notes = fullWo.completionNotes || '';
+    let parsedClass = '';
+    let hasLoto = false;
+    let cleanNotes = notes;
+    
+    // Parse Failure Class and LOTO checklist sequentially
+    while (true) {
+      if (cleanNotes.startsWith('[Failure Class: ')) {
+        const closingIdx = cleanNotes.indexOf('] ');
+        if (closingIdx !== -1) {
+          parsedClass = cleanNotes.substring(16, closingIdx);
+          cleanNotes = cleanNotes.substring(closingIdx + 2);
+          continue;
+        }
+      }
+      if (cleanNotes.startsWith('[EHS Safety Checklist: LOTO=Verified, PPE=Checked] ')) {
+        hasLoto = true;
+        cleanNotes = cleanNotes.substring(51);
+        continue;
+      }
+      break;
+    }
+
     setModalMode('edit');
     setFormData({
       dbId: fullWo.id,
@@ -192,7 +248,14 @@ export default function WorkOrdersPage() {
       dueDate: fullWo.dueDate ? fullWo.dueDate.split('T')[0] : '',
       estimatedHours: fullWo.estimatedHours || '',
       actualHours: fullWo.actualHours || '',
-      completionNotes: fullWo.completionNotes || ''
+      completionNotes: cleanNotes,
+      failureCause: fullWo.failureCause || '',
+      rootCause: fullWo.rootCause || '',
+      failureClass: parsedClass,
+      lotoElectrical: hasLoto,
+      lotoMechanical: hasLoto,
+      lotoGas: hasLoto,
+      lotoPpe: hasLoto
     });
     setIsModalOpen(true);
   };
@@ -207,6 +270,46 @@ export default function WorkOrdersPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Safety Checklist validation for high priority/reactive tasks
+    const isHighRisk = formData.priority === 'CRITICAL' || formData.priority === 'HIGH' || 
+                       formData.workType === 'Breakdown' || formData.workType === 'Emergency' || 
+                       formData.workType === 'Corrective Maintenance' || formData.workType === 'Corrective';
+    const isProgressingOrClosing = ['IN_PROGRESS', 'COMPLETED', 'CLOSED'].includes(formData.status);
+    
+    if (isHighRisk && isProgressingOrClosing) {
+      if (!formData.lotoElectrical || !formData.lotoMechanical || !formData.lotoGas || !formData.lotoPpe) {
+        alert("EHS Compliance Warning: You must verify all Lockout/Tagout (LOTO) safety isolation checklist items before putting this high-risk work order into progress or completing it.");
+        return;
+      }
+    }
+
+    // 2. Mandatory Close-out Codes validation for breakdown/reactive tasks
+    const isReactive = formData.workType === 'Breakdown' || formData.workType === 'Emergency' || 
+                       formData.workType === 'Corrective Maintenance' || formData.workType === 'Corrective';
+    const isClosing = ['COMPLETED', 'CLOSED'].includes(formData.status);
+
+    if (isReactive && isClosing) {
+      if (!formData.failureClass || !formData.failureCause || !formData.rootCause || !formData.completionNotes) {
+        alert("ISO 55001 Compliance Warning: You must log a Failure Class, Failure Cause, Corrective Remedy (Root Cause), and general Completion Notes before completing or closing a breakdown or corrective work order.");
+        return;
+      }
+    }
+
+    // Prepend Failure Class and LOTO status to completionNotes before saving
+    let finalNotes = formData.completionNotes || '';
+    if (formData.failureClass) {
+      finalNotes = `[Failure Class: ${formData.failureClass}] ` + finalNotes;
+    }
+    if (formData.lotoElectrical && formData.lotoMechanical && formData.lotoGas && formData.lotoPpe) {
+      finalNotes = `[EHS Safety Checklist: LOTO=Verified, PPE=Checked] ` + finalNotes;
+    }
+
+    const payload = {
+      ...formData,
+      completionNotes: finalNotes
+    };
+
     const url = modalMode === 'add' ? '/api/work-orders' : `/api/work-orders/${formData.dbId}`;
     const method = modalMode === 'add' ? 'POST' : 'PUT';
 
@@ -214,7 +317,7 @@ export default function WorkOrdersPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setIsModalOpen(false);
@@ -371,10 +474,112 @@ export default function WorkOrdersPage() {
                 </div>
               </div>
               
+              {isHighRisk && (
+                <div className="p-4 bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-xl space-y-4">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldAlert className="text-orange-500 shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <h4 className="text-sm font-semibold text-orange-800 dark:text-orange-300">Permit to Work (PTW) & Safety Isolations</h4>
+                      <p className="text-xs text-orange-600 dark:text-orange-400/80 mt-0.5">
+                        This is a high-risk or reactive work order. All physical isolations and safety checks must be verified and checked below before starting work or closing.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-7">
+                    <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.lotoElectrical}
+                        onChange={(e) => setFormData({...formData, lotoElectrical: e.target.checked})}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
+                      />
+                      <span>Electrical Isolation Verified (LOTO Padlocked)</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.lotoMechanical}
+                        onChange={(e) => setFormData({...formData, lotoMechanical: e.target.checked})}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
+                      />
+                      <span>Mechanical Energy Dissipated / Pressure Vented</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.lotoGas}
+                        onChange={(e) => setFormData({...formData, lotoGas: e.target.checked})}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
+                      />
+                      <span>Hazardous Area Clearance (Gas/Chemical)</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.lotoPpe}
+                        onChange={(e) => setFormData({...formData, lotoPpe: e.target.checked})}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
+                      />
+                      <span>Work Area Safe & PPE Checked</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {formData.status === 'COMPLETED' || formData.status === 'CLOSED' ? (
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">Completion Info</h3>
-                  <Input label="Completion Notes" value={formData.completionNotes} onChange={e => setFormData({...formData, completionNotes: e.target.value})} placeholder="How was this resolved?" />
+                  {isReactive ? (
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <Select 
+                        label="Failure Class" 
+                        placeholder="Select Failure Class"
+                        value={formData.failureClass} 
+                        onChange={e => setFormData({...formData, failureClass: e.target.value})}
+                      >
+                        <option value="Mechanical">Mechanical</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Instrumentation">Instrumentation</option>
+                        <option value="Structural">Structural</option>
+                        <option value="Civil">Civil</option>
+                      </Select>
+                      
+                      <Select 
+                        label="Failure Cause" 
+                        placeholder="Select Failure Cause"
+                        value={formData.failureCause} 
+                        onChange={e => setFormData({...formData, failureCause: e.target.value})}
+                      >
+                        <option value="Lack of Lubrication">Lack of Lubrication</option>
+                        <option value="Wear & Tear">Wear & Tear</option>
+                        <option value="Operating Error">Operating Error</option>
+                        <option value="Design Fault">Design Fault</option>
+                        <option value="Electrical Surge">Electrical Surge</option>
+                        <option value="External Factor">External Factor</option>
+                      </Select>
+
+                      <div className="col-span-2">
+                        <Input 
+                          label="Corrective Action / Remedy" 
+                          required 
+                          value={formData.rootCause} 
+                          onChange={e => setFormData({...formData, rootCause: e.target.value})} 
+                          placeholder="What actions were taken to remedy the failure and prevent recurrence?" 
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  <Input 
+                    label="Completion Notes" 
+                    required={isReactive}
+                    value={formData.completionNotes} 
+                    onChange={e => setFormData({...formData, completionNotes: e.target.value})} 
+                    placeholder="How was this resolved?" 
+                  />
                 </div>
               ) : null}
 

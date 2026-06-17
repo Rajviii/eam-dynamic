@@ -177,6 +177,57 @@ function TechnicianDashboard({ user }) {
             )) : <p className="text-sm text-slate-500 italic">No tasks assigned.</p>}
           </div>
         </div>
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+          <h3 className="text-slate-800 dark:text-slate-100 font-semibold mb-4">Daily Workload & Capacity</h3>
+          <div className="flex-1 flex flex-col justify-between space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-baseline">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                  {(stats.assignedHours || 0).toFixed(1)}h
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  of 8.0h shift limit
+                </span>
+              </div>
+              
+              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3.5 overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    (stats.utilizationRate || 0) > 100 ? 'bg-red-500' :
+                    (stats.utilizationRate || 0) > 75 ? 'bg-orange-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(100, stats.utilizationRate || 0)}%` }}
+                ></div>
+              </div>
+              
+              <div className="flex justify-between text-xs font-semibold mt-1">
+                <span className="text-slate-500">Utilization Rate</span>
+                <span className={
+                  (stats.utilizationRate || 0) > 100 ? 'text-red-500 font-bold' :
+                  (stats.utilizationRate || 0) > 75 ? 'text-orange-500' : 'text-green-600 dark:text-green-400'
+                }>
+                  {(stats.utilizationRate || 0).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Remaining Capacity</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {(stats.remainingCapacity ?? 8.0).toFixed(1)} hrs
+                </span>
+              </div>
+              
+              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                <p className="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400">
+                  💡 <strong>Planner Note:</strong> Daily scheduling is allocated by EAM Planners based on your trade capabilities and estimated task durations.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

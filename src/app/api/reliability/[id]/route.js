@@ -3,8 +3,9 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const metric = await prisma.reliabilityMetric.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { asset: true }
     });
 
@@ -21,10 +22,11 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const { id } = await params;
     const data = await request.json();
     
     const updatedMetric = await prisma.reliabilityMetric.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         mtbf: parseFloat(data.mtbf) || 0,
         mttr: parseFloat(data.mttr) || 0,
@@ -43,8 +45,9 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const { id } = await params;
     await prisma.reliabilityMetric.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     return NextResponse.json({ success: true });

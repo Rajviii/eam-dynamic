@@ -3,8 +3,9 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const risk = await prisma.riskAssessment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { asset: true }
     });
 
@@ -21,13 +22,14 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const { id } = await params;
     const data = await request.json();
     
     const prob = parseInt(data.likelihood) || 1;
     const impact = parseInt(data.consequence) || 1;
 
     const updatedRisk = await prisma.riskAssessment.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         probability: prob,
         impact: impact,
@@ -46,8 +48,9 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const { id } = await params;
     await prisma.riskAssessment.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     return NextResponse.json({ success: true });

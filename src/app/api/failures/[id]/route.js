@@ -3,8 +3,9 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const failureEvent = await prisma.failureEvent.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { asset: true, workOrder: true }
     });
 
@@ -21,10 +22,11 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const { id } = await params;
     const data = await request.json();
     
     const updatedFailure = await prisma.failureEvent.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         description: data.description,
         downtimeHours: parseFloat(data.downtimeHours) || 0,
@@ -42,8 +44,9 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const { id } = await params;
     await prisma.failureEvent.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     return NextResponse.json({ success: true });

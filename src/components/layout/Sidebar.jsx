@@ -50,6 +50,7 @@ export default function Sidebar() {
     { name: 'Preventive Maint.', path: '/work-orders/preventive', icon: CalendarIcon, roles: ['ADMIN', 'MANAGER'] },
     { name: 'Work Orders', path: '/work-orders', icon: ClipboardListIcon, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
     { name: 'My Work Orders', path: '/work-orders', icon: ClipboardListIcon, roles: ['TECHNICIAN'] },
+    { name: 'Planner Workbench', path: '/work-orders/planner', icon: ClipboardListIcon, roles: ['ADMIN', 'MANAGER'] },
     { name: 'Reliability', path: '/reliability', icon: ActivityIcon, roles: ['ADMIN', 'MANAGER'] },
     { name: 'Risk Register', path: '/risk', icon: ShieldAlertIcon, roles: ['ADMIN', 'MANAGER'] },
     { name: 'Technicians / Resources', path: '/technicians', icon: UsersIcon, roles: ['ADMIN', 'MANAGER'] },

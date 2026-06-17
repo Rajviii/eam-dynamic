@@ -1,0 +1,137 @@
+================================================================================
+Enterprise Asset Management (EAM) / CMMS Platform Feedback & Analysis Report
+================================================================================
+Subject Platform: DesireInfoWeb CMMS (EAM Pro)
+Review Basis: Board-Level Assessment Report (CMMS feedback.pdf)
+Date: June 17, 2026
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY: CURRENT STATE VS. STANDARDS
+--------------------------------------------------------------------------------
+The CMMS feedback.pdf indicates that the DesireInfoWeb CMMS proposal originally scored
+an Overall EAM Score of 38% (Weighted 44/100) and an ISO 55001 Alignment of 32%,
+placing it at an EAM Maturity Level of 2.2 / 7 ("Reactive-Preventive; Pre-Reliability
+Engineering"). 
+
+Our analysis of the active Next.js/Prisma codebase reveals that the application is
+currently transitioning from a basic transaction-processing CMMS to an enterprise-grade
+EAM. The application has implemented several foundational features of Wave 1 (Foundation
+& Governance) and elements of Wave 3 (Reliability), but critical gaps remain around
+EHS, S&T Planning, Predictive Maintenance, and Asset Lifecycle Costing.
+
+--------------------------------------------------------------------------------
+2. WHAT THE CURRENT APPLICATION CONTAINS
+--------------------------------------------------------------------------------
+The existing codebase implements the following key functional modules:
+
+- Dashboard:
+  - Real-time KPI Widgets (Total Assets, Availability, Open WOs, Low Stock items).
+  - Asset Health Overview and Work Orders by Status dynamic donut charts.
+  - Interactive 5x5 Risk Exposure Heatmap (Likelihood vs Consequence scoring).
+  - Quick-view sections for Critical Assets at Risk and Upcoming Maintenance tasks.
+  - ISO 55001 Strategic Objectives checklist (Availability Target, Safety, cost metrics).
+
+- Asset Register & Hierarchy (/assets):
+  - Tabular list of assets with search, sorting, and pagination.
+  - Support for multi-tiered parent-child hierarchies (Equipment trees).
+  - Asset fields covering Categories, Sites, Lifecycle Stage, and soft-delete features.
+  
+- Asset Management Plan (/asset-management-plan):
+  - Dynamic Strategic Targets for fiscal years (Availability, Downtime, Costs, Health).
+  - Manual triggers to run PM forecasting.
+  - Alignment guidelines explicitly referencing ISO 55001 standards.
+
+- Work Order Management (/work-orders):
+  - Drag-and-drop Kanban Column board and list-view table.
+  - Status progression workflow (Draft, Assigned, In Progress, Waiting Parts, Completed, Closed).
+  - Estimated vs. actual labor hours tracking.
+  - Integration with consumed parts requests.
+
+- Spares & Materials Management (/inventory, /inventory/requests):
+  - Inventory list showing quantity on hand, minimum stock, and reorder levels.
+  - Parts request, approval, and issuing workflow linked to specific Work Orders.
+
+- Reliability Dashboard (/reliability):
+  - Calculated MTBF (Mean Time Between Failures) and MTTR (Mean Time To Repair).
+  - Availability and System Reliability percentage widgets.
+  - Downtime trends and highest failure frequency tracking.
+  - Failure event logging database.
+
+- Risk Register (/risk):
+  - Matrix score calculations (Likelihood * Consequence).
+  - Active mitigation tracking.
+
+--------------------------------------------------------------------------------
+3. STANDARDS ALIGNMENT ANALYSIS (ISO 55001 / SMRP / RCM)
+--------------------------------------------------------------------------------
+Here is how the current system aligns with the standards mentioned in the report:
+
+- Cloud Architecture & Security (Standard: SOC 2, RBAC, JWT):
+  - CODEBASE STATUS: STRONG (9/10). The Next.js client uses AuthContext with role isolation (ADMIN, MANAGER, TECHNICIAN, VIEWER) and secure API routing. Fits the cloud-native, RBAC-protected portal ecosystem praised in the report.
+
+- Commercial Workflow Orchestration:
+  - CODEBASE STATUS: STRONG (8/10). Clear separation between vendor portals, inventory dispatch, part approvals, and client work order tracking.
+
+- Asset Register & Hierarchy (Standard: ISO 14224):
+  - CODEBASE STATUS: PARTIAL (5/10). A parent-child hierarchy is supported, but it lacks a structured functional location taxonomy fully aligned to the ISO 14224 standard (e.g. System -> Loop -> Position).
+
+- Risk Assessment (Standard: ISO 55001):
+  - CODEBASE STATUS: ADEQUATE/STRONG (7/10). The Risk matrix and Risk Register are fully interactive, calculating criticality scores based on likelihood and impact. It aligns well with the corporate-level planning requirements of ISO 55001.
+
+- Work Management & Close-out (Standard: SMRP Best Practices):
+  - CODEBASE STATUS: PARTIAL (6/10). Standard scheduling and Kanban boards are fully functional. However, the close-out logic is missing audited technical checklists, QA workflows, and mandatory failure cause code capture (Problem-Cause-Remedy taxonomy).
+
+- Reliability Engineering (Standard: RCM / FMEA):
+  - CODEBASE STATUS: CRITICAL GAP (2/10). While MTBF, MTTR, and Availability widgets are present (addressing the "MTBF/MTTR not evidenced" gap in the PDF), the core reliability workflows—FMEA libraries, Root Cause Analysis (RCA) cause trees (5-Why/Fishbone), and repeat-failure escalation—are completely absent.
+
+--------------------------------------------------------------------------------
+4. DETAILED PENDING ITEMS (CRITICAL CAPABILITY GAPS)
+--------------------------------------------------------------------------------
+To progress toward a mature EAM solution (Targeting Wave 2 and Wave 3 of the roadmap),
+the following major features are currently pending development:
+
+- Spares & Materials (Wave 2 - Target 65/100):
+  - No repairable spares management loop (issue -> inspect -> repair -> return-to-store).
+  - No min/max reorder point optimization algorithms.
+  - No critical spares classification aligned with asset criticality.
+
+- Workforce Planning & Planner Workbench (Wave 2):
+  - Lacks a dedicated "Maintenance Planner Workbench" for scheduling.
+  - No artisan skills matrix or certification expiry tracking.
+  - No backlog age analysis or resource-constrained scheduling queue.
+
+- Reliability Excellence (Wave 3 - Target 75/100):
+  - No RCA (Root Cause Analysis) investigation workflow.
+  - No FMEA library integration.
+  - No automated repeat failure detection and warning.
+
+- Condition-Based & Predictive Maintenance (Wave 4 - Target 82/100):
+  - No IoT sensor data ingestion (Azure IoT Hub).
+  - No real-time asset health threshold alerts (vibration, temperature, oil analysis).
+  - No Remaining Useful Life (RUL) forecasting models.
+
+- Integrated EHS (ISO 45001 / ISSoW):
+  - No Permit to Work (PTW) digital sign-off.
+  - No Lockout/Tagout (LOTO) isolation workflows.
+  - No Management of Change (MoC) or Incident Reporting forms.
+
+- Shutdown & Turnaround (S&T) Management:
+  - No project planning module (WBS/CPM Gantt charts).
+  - No material kitting and "Bag and Tag" flow.
+
+--------------------------------------------------------------------------------
+5. WORKFLOW RECOMMENDATIONS
+--------------------------------------------------------------------------------
+To raise the EAM platform score from 38% towards 75%+:
+
+1. Implement Mandatory Close-out Codes (Wave 1): Update the Work Order completion 
+   form to require technicians to log a Failure Class, Cause, and Remedy before 
+   closing a breakdown work order.
+2. Build an Asset Criticality scoring wizard (ISO 55001): Let users fill out safety,
+   environmental, production, and financial scores to automatically classify asset
+   criticality (A, B, C hierarchy).
+3. Introduce a Planner Workbench page: Add capacity scheduling where a planner can
+   assign artisan hours based on calendar availability.
+4. Integrate a basic Permit to Work checklist: Create an EHS block in high-risk
+   work orders requiring confirmation of LOTO (Lockout/Tagout) safety isolations.
+================================================================================

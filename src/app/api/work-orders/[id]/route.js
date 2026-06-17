@@ -35,16 +35,24 @@ export async function PUT(request, { params }) {
     if (!existingWo) return NextResponse.json({ error: 'Work order not found' }, { status: 404 });
     if (existingWo.status === 'CLOSED') return NextResponse.json({ error: 'Cannot modify a closed work order' }, { status: 403 });
 
-    // Validate Due Date
-    if (data.dueDate && new Date(data.dueDate) < new Date(new Date().setHours(0,0,0,0))) {
-      return NextResponse.json({ error: 'Due Date cannot be in the past' }, { status: 400 });
-    }
-
     let mappedStatus = data.status;
 
     // RBAC: Technicians cannot CLOSE work orders
     if (user && user.role === 'TECHNICIAN' && mappedStatus === 'CLOSED') {
       mappedStatus = 'COMPLETED'; // Force to completed instead of closed
+    }
+
+    // Validation for Breakdown, Emergency, and Corrective Maintenance on close-out/completion
+    if ((mappedStatus === 'COMPLETED' || mappedStatus === 'CLOSED') && 
+        (data.workType === 'Breakdown' || data.workType === 'Emergency' || data.workType === 'Corrective Maintenance' || data.workType === 'Corrective')) {
+      if (!data.failureCause || !data.rootCause || !data.completionNotes) {
+        return NextResponse.json({ error: 'Failure Cause, Corrective Remedy, and Completion Notes are mandatory before completing or closing breakdown/corrective work orders.' }, { status: 400 });
+      }
+    }
+
+    // Validate Due Date
+    if (data.dueDate && new Date(data.dueDate) < new Date(new Date().setHours(0,0,0,0))) {
+      return NextResponse.json({ error: 'Due Date cannot be in the past' }, { status: 400 });
     }
 
     const updatedWo = await prisma.workOrder.update({

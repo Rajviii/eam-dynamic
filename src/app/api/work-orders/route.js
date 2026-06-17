@@ -45,6 +45,8 @@ export async function GET(request) {
           rawStatus: wo.status,
           assignee: wo.assignedTo ? wo.assignedTo.name : null,
           assigneeRole: wo.assignedTo ? wo.assignedTo.role : null,
+          assignedToId: wo.assignedToId,
+          estimatedHours: wo.estimatedHours
         };
         if (wo.status === 'DRAFT') workOrders.draft.push(formattedWo);
         else if (wo.status === 'ASSIGNED') workOrders.assigned.push(formattedWo);
@@ -97,6 +99,8 @@ export async function GET(request) {
       status: wo.status === 'DRAFT' ? 'Draft' : wo.status === 'ASSIGNED' ? 'Assigned' : wo.status === 'IN_PROGRESS' ? 'In Progress' : wo.status === 'WAITING_PARTS' ? 'Waiting Parts' : wo.status === 'COMPLETED' ? 'Completed' : 'Closed',
       assignee: wo.assignedTo ? wo.assignedTo.name : null,
       assigneeRole: wo.assignedTo ? wo.assignedTo.role : null,
+      assignedToId: wo.assignedToId,
+      estimatedHours: wo.estimatedHours,
       workType: wo.workType,
       dueDate: wo.dueDate,
       createdAt: wo.createdAt

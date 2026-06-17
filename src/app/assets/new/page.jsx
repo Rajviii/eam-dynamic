@@ -10,6 +10,10 @@ export default function NewAssetPage() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [sites, setSites] = useState([]);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardScores, setWizardScores] = useState({
+    safetyImpact: 1, environmentalImpact: 1, productionImpact: 1, financialImpact: 1
+  });
 
   const [formData, setFormData] = useState({
     code: '', name: '', status: 'OPERATIONAL', lifecycleStage: 'PLANNED', categoryId: '', siteId: '',
@@ -123,8 +127,29 @@ export default function NewAssetPage() {
         {/* Criticality Assessment */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">ISO 55001 Criticality Assessment</h2>
-            <span className="text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">Scale: 1 (Low) to 5 (High)</span>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">ISO 55001 Criticality Assessment</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Determine equipment prioritization classification</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setWizardScores({
+                    safetyImpact: parseInt(formData.safetyImpact) || 1,
+                    environmentalImpact: parseInt(formData.environmentalImpact) || 1,
+                    productionImpact: parseInt(formData.productionImpact) || 1,
+                    financialImpact: parseInt(formData.financialImpact) || 1
+                  });
+                  setIsWizardOpen(true);
+                }}
+                className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Open Scoring Wizard
+              </button>
+              <span className="text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">Scale: 1-5</span>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input label="Safety Impact" type="number" min="1" max="5" name="safetyImpact" value={formData.safetyImpact} onChange={handleChange} />
@@ -162,6 +187,164 @@ export default function NewAssetPage() {
           </button>
         </div>
       </form>
+
+      {/* Criticality Scoring Wizard Modal */}
+      {isWizardOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <div>
+                <span className="text-xs uppercase font-mono tracking-wider text-slate-400 block">ISO 55001 Standard</span>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 mt-0.5">Criticality Scoring Wizard</h2>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsWizardOpen(false)} 
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <p className="text-xs text-slate-500">
+                Select the description that best fits the potential impact of this asset's failure across safety, environmental, production, and financial categories.
+              </p>
+
+              {/* Safety Impact */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white block">1. Safety & Health Impact</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { val: 1, lbl: "1 - Negligible (No injury or minor health impact)" },
+                    { val: 2, lbl: "2 - Minor (Minor injury requiring first-aid treatment)" },
+                    { val: 3, lbl: "3 - Moderate (Medical treatment or lost-time injury)" },
+                    { val: 4, lbl: "4 - Major (Serious injury causing permanent disability)" },
+                    { val: 5, lbl: "5 - Catastrophic (Single or multiple workplace fatalities)" }
+                  ].map(opt => (
+                    <label key={opt.val} className={`p-3 rounded-lg border text-sm flex items-center gap-3 cursor-pointer transition-all ${wizardScores.safetyImpact === opt.val ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-500' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>
+                      <input 
+                        type="radio" 
+                        name="wizSafety" 
+                        value={opt.val} 
+                        checked={wizardScores.safetyImpact === opt.val} 
+                        onChange={() => setWizardScores(prev => ({ ...prev, safetyImpact: opt.val }))}
+                        className="text-blue-600 focus:ring-blue-500 animate-none"
+                      />
+                      <span className="text-slate-700 dark:text-slate-300">{opt.lbl}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Environmental Impact */}
+              <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white block">2. Environmental Impact</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { val: 1, lbl: "1 - Negligible (No release, localized impact only)" },
+                    { val: 2, lbl: "2 - Minor (Low release, fully contained within site boundaries)" },
+                    { val: 3, lbl: "3 - Moderate (Moderate release requiring reports to regulatory bodies)" },
+                    { val: 4, lbl: "4 - Major (Serious release, localized community impact, regulatory fines)" },
+                    { val: 5, lbl: "5 - Catastrophic (Major environmental disaster with long-term ecosystem damage)" }
+                  ].map(opt => (
+                    <label key={opt.val} className={`p-3 rounded-lg border text-sm flex items-center gap-3 cursor-pointer transition-all ${wizardScores.environmentalImpact === opt.val ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-500' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>
+                      <input 
+                        type="radio" 
+                        name="wizEnv" 
+                        value={opt.val} 
+                        checked={wizardScores.environmentalImpact === opt.val} 
+                        onChange={() => setWizardScores(prev => ({ ...prev, environmentalImpact: opt.val }))}
+                        className="text-blue-600 focus:ring-blue-500 animate-none"
+                      />
+                      <span className="text-slate-700 dark:text-slate-300">{opt.lbl}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Production Impact */}
+              <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white block">3. Production & Operations Impact</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { val: 1, lbl: "1 - Negligible (No interruption to operations)" },
+                    { val: 2, lbl: "2 - Minor (Minor production delay, easily rescheduled)" },
+                    { val: 3, lbl: "3 - Moderate (Moderate delay, partial shutdown < 12 hours)" },
+                    { val: 4, lbl: "4 - Major (Significant delay, partial/full plant shutdown 12-48 hours)" },
+                    { val: 5, lbl: "5 - Catastrophic (Total plant shutdown > 48 hours, supply chain breach)" }
+                  ].map(opt => (
+                    <label key={opt.val} className={`p-3 rounded-lg border text-sm flex items-center gap-3 cursor-pointer transition-all ${wizardScores.productionImpact === opt.val ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-500' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>
+                      <input 
+                        type="radio" 
+                        name="wizProd" 
+                        value={opt.val} 
+                        checked={wizardScores.productionImpact === opt.val} 
+                        onChange={() => setWizardScores(prev => ({ ...prev, productionImpact: opt.val }))}
+                        className="text-blue-600 focus:ring-blue-500 animate-none"
+                      />
+                      <span className="text-slate-700 dark:text-slate-300">{opt.lbl}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Financial Impact */}
+              <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white block">4. Financial Impact</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { val: 1, lbl: "1 - Negligible (Cost of failure is < $1,000)" },
+                    { val: 2, lbl: "2 - Minor (Cost of failure is $1,000 to $10,000)" },
+                    { val: 3, lbl: "3 - Moderate (Cost of failure is $10,000 to $50,000)" },
+                    { val: 4, lbl: "4 - Major (Cost of failure is $50,000 to $250,000)" },
+                    { val: 5, lbl: "5 - Catastrophic (Cost of failure exceeds $250,000)" }
+                  ].map(opt => (
+                    <label key={opt.val} className={`p-3 rounded-lg border text-sm flex items-center gap-3 cursor-pointer transition-all ${wizardScores.financialImpact === opt.val ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-500' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>
+                      <input 
+                        type="radio" 
+                        name="wizFin" 
+                        value={opt.val} 
+                        checked={wizardScores.financialImpact === opt.val} 
+                        onChange={() => setWizardScores(prev => ({ ...prev, financialImpact: opt.val }))}
+                        className="text-blue-600 focus:ring-blue-500 animate-none"
+                      />
+                      <span className="text-slate-700 dark:text-slate-300">{opt.lbl}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3 shrink-0">
+              <button 
+                type="button" 
+                onClick={() => setIsWizardOpen(false)} 
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    safetyImpact: wizardScores.safetyImpact,
+                    environmentalImpact: wizardScores.environmentalImpact,
+                    productionImpact: wizardScores.productionImpact,
+                    financialImpact: wizardScores.financialImpact
+                  }));
+                  setIsWizardOpen(false);
+                }} 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Apply Wizard Scores
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

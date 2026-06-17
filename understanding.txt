@@ -9,3 +9,130 @@ Why do companies use it?
 Organizations adopt this standard to:Reduce operating costs by eliminating unnecessary expenses and reactive repairs.
 Maximize the return on investment from everything they own.
 Minimize risks like unexpected downtime or safety hazards
+
+
+ISO 55001 - International Standard for Asset Management Systems
+- ISO 55001 is a framework that helps organizations manage their assets throughout their entire lifecycle to maximize value, 
+reduce risk, and control costs.
+- It helps organizations manage assets efficiently from acquisition to disposal while balancing cost, risk, performance, and compliance.
+Example:
+- A factory doesn't only repair a machine when it breaks. 
+It plans maintenance, tracks risk, manages lifecycle cost, and decides when replacement is better than repair.
+
+
+RCM - Reliability Centered Maintenance
+- A methodology used to determine the most effective maintenance strategy for an asset.
+- RCM helps decide whether an asset should be maintained through preventive maintenance, 
+predictive maintenance, condition monitoring, or run-to-failure.
+Example:
+- A critical production pump may require vibration monitoring, while a light bulb can simply be replaced when it fails.
+
+
+MTBF - Mean Time Between Failures
+Calculated like
+- MTBF = Total Operating Time ÷ Number of Failures
+
+- Measures how long an asset typically operates before failing.
+- MTBF tells us the reliability of an asset. Higher MTBF means the asset fails less frequently.
+Example:
+- Machine runs 1000 hours and fails 5 times.
+- MTBF = 1000 ÷ 5 = 200 hours
+Meaning: On average the machine fails every 200 hours.
+
+
+MTTR - Mean Time To Repair
+Calculated like
+- MTTR = Total Repair Time ÷ Number of Repairs
+
+- Measures how quickly maintenance teams restore equipment after a failure.
+- MTTR indicates maintainability. Lower MTTR means assets are repaired faster.
+Example:
+- 5 breakdowns required 20 hours of repair.
+- MTTR = 20 ÷ 5 = 4 hours
+Meaning: It takes 4 hours on average to repair the equipment.
+
+
+Availability
+Calculated Like
+- Availability = MTBF ÷ (MTBF + MTTR)
+
+- Shows how often an asset is available for production.
+Example:
+- MTBF = 200 hrs, MTTR = 4 hrs
+- Availability = 200 / (200+4) = 98%
+Meaning: The asset is available for production 98% of the time.
+
+
+RCA - Root Cause Analysis
+- A structured process used to find the actual cause of a problem instead of only fixing symptoms.
+- RCA identifies why a failure occurred and helps prevent it from happening again.
+Example:
+Pump stopped working
+Problem: Motor burned
+Why?: Bearing failed
+Why?: Lubrication was missing
+Root Cause: Lubrication procedure not followed
+
+
+FMEA - Failure Modes and Effects Analysis
+- A proactive method used to identify possible failures before they happen.
+- FMEA evaluates potential failure modes, their impact, and the actions needed to reduce risk.
+Example:
+| Component | Failure Mode | Effect          |
+| --------- | ------------ | --------------- |
+| Bearing   | Wear         | Pump failure    |
+| Motor     | Overheating  | Production loss |
+
+
+PM - Preventive Maintenance
+- Maintenance performed at planned intervals before failure occurs.
+- PM is scheduled maintenance aimed at preventing breakdowns.
+Example:
+- Changing oil every 3 months.
+
+
+PdM - Predictive Maintenance
+- Maintenance performed based on asset condition and data analysis.
+- Predictive Maintenance uses sensors and analytics to predict failures before they happen.
+Example
+- Replacing a bearing after vibration readings indicate deterioration.
+
+
+CBM - Condition-Based Maintenance
+- Maintenance triggered when asset condition reaches a threshold.
+- CBM performs maintenance based on actual equipment condition instead of fixed schedules.
+Example:
+Replace a bearing only when vibration exceeds a predefined limit.
+
+
+SMRP - Society for Maintenance & Reliability Professionals
+- A globally recognized body that publishes maintenance and reliability best practices.
+- SMRP provides standards and best practices for maintenance planning, reliability, work management, and performance measurement.
+
+
+RUL - Remaining Useful Life
+- Estimated amount of useful operating time left before an asset is likely to fail.
+- RUL predicts how much life remains in an asset before replacement or repair is required.
+Example:
+- A bearing is expected to last another 6 months based on sensor data.
+
+
+LOTO - Lockout / Tagout
+- A safety procedure that ensures equipment is completely isolated before maintenance work starts.
+- LOTO prevents accidental startup of equipment during maintenance activities.
+Example:
+- Locking electrical power before servicing a motor.
+
+
+PTW - Permit To Work
+- A formal authorization process required before performing hazardous work.
+- PTW ensures all safety precautions are reviewed and approved before work begins.
+Example:
+- Hot work permit for welding.
+
+
+ST - Shutdown & Turnaround (S&T)
+- A planned period when equipment or an entire plant is taken offline for major maintenance and upgrades.
+- Shutdown and Turnaround management coordinates large-scale maintenance activities to minimize downtime and risk.
+Example:
+- Annual refinery shutdown for inspections and equipment replacement.

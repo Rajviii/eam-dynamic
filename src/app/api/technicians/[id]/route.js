@@ -3,8 +3,9 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const technician = await prisma.technician.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         assignedWorkOrders: true,
         maintenanceProgs: true,
@@ -24,19 +25,50 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const { id } = await params;
     const data = await request.json();
 
-    const updatedTechnician = await prisma.technician.update({
-      where: { id: params.id },
-      data: {
-        employeeNumber: data.employeeNumber,
-        name: data.name,
-        role: data.role,
-        email: data.email,
-        phone: data.phone,
-        skills: data.skills,
-        status: data.status,
+    // Fetch existing technician first to check their current email
+    const existingTech = await prisma.technician.findUnique({
+      where: { id: id }
+    });
+
+    if (!existingTech) {
+      return NextResponse.json({ error: 'Technician not found' }, { status: 404 });
+    }
+
+    const updatedTechnician = await prisma.$transaction(async (tx) => {
+      // 1. Update Technician table
+      const updated = await tx.technician.update({
+        where: { id: id },
+        data: {
+          employeeNumber: data.employeeNumber,
+          name: data.name,
+          role: data.role,
+          email: data.email,
+          phone: data.phone,
+          skills: data.skills,
+          status: data.status,
+        }
+      });
+
+      // 2. Synchronize to User table if a matching user account exists
+      const existingUser = await tx.user.findUnique({
+        where: { email: existingTech.email }
+      });
+
+      if (existingUser) {
+        await tx.user.update({
+          where: { email: existingTech.email },
+          data: {
+            email: data.email,
+            name: data.name,
+            role: 'TECHNICIAN'
+          }
+        });
       }
+
+      return updated;
     });
 
     return NextResponse.json(updatedTechnician);
@@ -48,9 +80,31 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await prisma.technician.delete({
-      where: { id: params.id }
+    const { id } = await params;
+
+    const existingTech = await prisma.technician.findUnique({
+      where: { id: id }
     });
+
+    if (!existingTech) {
+      return NextResponse.json({ error: 'Technician not found' }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete Technician
+      await tx.technician.delete({
+        where: { id: id }
+      });
+
+      // 2. Delete corresponding User if it is a technician login
+      await tx.user.deleteMany({
+        where: {
+          email: existingTech.email,
+          role: 'TECHNICIAN'
+        }
+      });
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting technician:', error);
