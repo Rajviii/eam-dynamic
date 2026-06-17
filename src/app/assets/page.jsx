@@ -3,11 +3,22 @@
 import { useDataTable } from '../../hooks/useDataTable';
 import Pagination from '../../components/ui/Pagination';
 import SortableHeader from '../../components/ui/SortableHeader';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function AssetsPage() {
+function AssetsList() {
   const router = useRouter();
-  const { data: assets, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ endpoint: '/api/assets', initialSortBy: 'code' });
+  const searchParams = useSearchParams();
+  const criticality = searchParams.get('criticality') || '';
+
+  const endpoint = criticality
+    ? `/api/assets?criticality=${encodeURIComponent(criticality)}`
+    : '/api/assets';
+
+  const { data: assets, total, loading, page, limit, setPage, handleSort, handleSearch, refresh, sortBy, sortOrder } = useDataTable({ 
+    endpoint, 
+    initialSortBy: 'code' 
+  });
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this asset?')) return;
@@ -32,7 +43,22 @@ export default function AssetsPage() {
     <div className="space-y-6 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Assets</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Assets</h1>
+            {criticality && (
+              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold px-2.5 py-1 rounded-full uppercase flex items-center gap-1.5 select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                {criticality} Only
+                <button 
+                  onClick={() => router.push('/assets')} 
+                  className="hover:text-red-950 dark:hover:text-red-200 font-bold ml-1 text-sm leading-none focus:outline-none"
+                  title="Clear Filter"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage all your equipment and facilities</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -43,7 +69,7 @@ export default function AssetsPage() {
             <input
               type="text"
               placeholder="Search assets..."
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={handleSearch}
               className="block w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-shadow text-slate-900 dark:text-white"
             />
           </div>
@@ -130,5 +156,13 @@ export default function AssetsPage() {
         <Pagination page={page} limit={limit} total={total} setPage={setPage} />
       </div>
     </div>
+  );
+}
+
+export default function AssetsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 animate-pulse">Loading assets...</div>}>
+      <AssetsList />
+    </Suspense>
   );
 }

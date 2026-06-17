@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Select from '../components/ui/Select';
 import { useAuth } from '../contexts/AuthContext';
+import Link from 'next/link';
 
 // Reusable KPI Widget Component
 function MetricWidget({ title, value, subtext, trend, trendUp }) {
@@ -74,26 +75,29 @@ function RiskHeatmap({ matrixData }) {
   };
 
   return (
-    <div className="flex">
+    <div className="flex gap-2">
       {/* Y Axis Label */}
-      <div className="flex flex-col justify-center items-center pr-2">
-        <span className="text-xs font-semibold text-slate-500 -rotate-90 origin-center translate-x-3 w-4">Likelihood</span>
+      <div className="flex flex-col justify-center items-center pr-1 select-none">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 -rotate-90 origin-center w-4 whitespace-nowrap">Likelihood</span>
       </div>
+      
+      {/* Y Axis Ticks */}
+      <div className="grid grid-rows-5 gap-1 h-48 text-[10px] font-medium text-slate-400 dark:text-slate-500 items-center pr-1 select-none">
+        {[5, 4, 3, 2, 1].map(tick => <span key={tick} className="text-right">{tick}</span>)}
+      </div>
+
+      {/* Grid and X Axis */}
       <div className="flex flex-col flex-1 gap-1">
-        {/* Y Axis Ticks */}
-        <div className="flex flex-col-reverse justify-between h-48 absolute -ml-4 py-2">
-          {[1, 2, 3, 4, 5].map(tick => <span key={tick} className="text-[10px] text-slate-400">{tick}</span>)}
-        </div>
         {/* 5x5 Grid */}
-        <div className="grid grid-cols-5 grid-rows-5 gap-1 h-48 flex-1 ml-2">
+        <div className="grid grid-cols-5 grid-rows-5 gap-1 h-48 flex-1">
           {[5, 4, 3, 2, 1].map(l => (
             [1, 2, 3, 4, 5].map(c => {
               const cell = matrixData.find(m => m.likelihood === l && m.consequence === c);
               const count = cell ? cell.count : 0;
               return (
-                <div key={`${l}-${c}`} className={`${getCellColor(l, c)} opacity-80 hover:opacity-100 rounded-sm flex items-center justify-center transition-opacity relative group`}>
+                <div key={`${l}-${c}`} className={`${getCellColor(l, c)} opacity-80 hover:opacity-100 rounded-sm flex items-center justify-center transition-all duration-200 relative group cursor-pointer`}>
                   {count > 0 && <span className="text-white text-xs font-bold drop-shadow-md">{count}</span>}
-                  <div className="hidden group-hover:block absolute -top-8 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow-lg z-10 whitespace-nowrap">
+                  <div className="hidden group-hover:block absolute -top-9 bg-slate-900 dark:bg-slate-800 text-white text-[10px] px-2 py-1 rounded shadow-lg z-10 whitespace-nowrap">
                     {count} Risks (L:{l} C:{c})
                   </div>
                 </div>
@@ -102,11 +106,11 @@ function RiskHeatmap({ matrixData }) {
           ))}
         </div>
         {/* X Axis Ticks */}
-        <div className="flex justify-between pl-4 pr-3 pt-1">
-          {[1, 2, 3, 4, 5].map(tick => <span key={tick} className="text-[10px] text-slate-400">{tick}</span>)}
+        <div className="grid grid-cols-5 text-[10px] font-medium text-slate-400 dark:text-slate-500 text-center pt-1 select-none">
+          {[1, 2, 3, 4, 5].map(tick => <span key={tick}>{tick}</span>)}
         </div>
-        <div className="text-center w-full mt-1">
-          <span className="text-xs font-semibold text-slate-500 ml-4">Consequence</span>
+        <div className="text-center w-full mt-1 select-none">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Consequence</span>
         </div>
       </div>
     </div>
@@ -336,7 +340,9 @@ function AdminDashboard({ user }) {
               </tbody>
             </table>
           </div>
-          <button className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-4 hover:underline">View all critical assets</button>
+          <Link href="/assets?criticality=CRITICAL" className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-4 hover:underline">
+            View all critical assets
+          </Link>
         </div>
 
         {/* Upcoming Maintenance */}
@@ -396,7 +402,9 @@ function AdminDashboard({ user }) {
             )}
 
           </div>
-          <button className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-auto pt-4 hover:underline self-start">View full calendar</button>
+          <Link href="/work-orders/preventive" className="text-blue-600 dark:text-blue-400 text-sm font-medium mt-auto pt-4 hover:underline self-start">
+            View full calendar
+          </Link>
         </div>
 
       </div>
@@ -405,7 +413,9 @@ function AdminDashboard({ user }) {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-slate-800 dark:text-slate-100 font-semibold">Strategic Objectives (ISO 55001)</h3>
-          <button className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">View all objectives</button>
+          <Link href="/asset-management-plan" className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">
+            View all objectives
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800">

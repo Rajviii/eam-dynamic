@@ -19,15 +19,18 @@ export function useDataTable({ endpoint, initialSortBy = 'id', initialSortOrder 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const hasQuery = endpoint.includes('?');
+      const separator = hasQuery ? '&' : '?';
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         search,
+        query: search, // support both parameter styles for API resilience
         sortBy,
         sortOrder
       });
 
-      const res = await fetch(`${endpoint}?${queryParams.toString()}`);
+      const res = await fetch(`${endpoint}${separator}${queryParams.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       
       const json = await res.json();
@@ -67,7 +70,8 @@ export function useDataTable({ endpoint, initialSortBy = 'id', initialSortOrder 
   };
 
   const handleSearch = (e) => {
-    setSearch(e.target.value);
+    const value = e && e.target ? e.target.value : e;
+    setSearch(value || '');
     setPage(1); // Reset to page 1 on new search
   };
 

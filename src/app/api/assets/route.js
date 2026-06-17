@@ -25,10 +25,18 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
     const skip = (page - 1) * limit;
-    const query = searchParams.get('query') || '';
+    const query = searchParams.get('query') || searchParams.get('search') || '';
+    
+    const validCriticalities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+    const criticality = searchParams.get('criticality')?.toUpperCase() || '';
 
     const where = {
       isDeleted: false,
+      ...(validCriticalities.includes(criticality) ? {
+        criticality: {
+          classification: criticality
+        }
+      } : {}),
       ...(query ? {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
