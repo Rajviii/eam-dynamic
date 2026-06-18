@@ -28,6 +28,7 @@ export default function AssetDetailsPage() {
   // For Edit Form
   const [categories, setCategories] = useState([]);
   const [sites, setSites] = useState([]);
+  const [potentialParents, setPotentialParents] = useState([]);
   const [formData, setFormData] = useState({});
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardScores, setWizardScores] = useState({
@@ -44,6 +45,20 @@ export default function AssetDetailsPage() {
     fetchAsset();
     fetchDropdowns();
   }, [params.id]);
+
+  useEffect(() => {
+    if (!formData.siteId) {
+      setPotentialParents([]);
+      return;
+    }
+    fetch(`/api/assets?siteId=${formData.siteId}&limit=1000`)
+      .then(res => res.json())
+      .then(resData => {
+        const filtered = (resData.data || []).filter(a => a.id !== params.id);
+        setPotentialParents(filtered);
+      })
+      .catch(console.error);
+  }, [formData.siteId, params.id]);
 
   useEffect(() => {
     if (activeTab === 'Work Orders') {
@@ -79,6 +94,7 @@ export default function AssetDetailsPage() {
           lifecycleStage: data.lifecycleStage || 'OPERATIONAL',
           categoryId: data.categoryId || '',
           siteId: data.siteId || '',
+          parentId: data.parentId || '',
           imageUrl: data.imageUrl || '',
           manufacturer: data.manufacturer || '',
           modelNumber: data.modelNumber || '',
@@ -209,6 +225,21 @@ export default function AssetDetailsPage() {
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Category</span>
                   <span className="text-lg font-medium text-slate-900 dark:text-white">{asset.category?.name || 'None'}</span>
                 </div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Parent Asset / System</span>
+                  <span className="text-lg font-medium text-slate-900 dark:text-white">
+                    {asset.parent ? (
+                      <button 
+                        onClick={() => router.push(`/assets/${asset.parent.id}`)}
+                        className="text-blue-600 dark:text-blue-400 hover:underline text-left font-medium"
+                      >
+                        {asset.parent.name} ({asset.parent.code})
+                      </button>
+                    ) : (
+                      <span className="text-slate-400 italic font-normal text-sm">None (Top Level)</span>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -248,6 +279,10 @@ export default function AssetDetailsPage() {
                 <Select label="Location (Site)" required name="siteId" value={formData.siteId} onChange={handleChange}>
                   <option value="">-- Select Location --</option>
                   {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </Select>
+                <Select label="Parent Asset / System" name="parentId" value={formData.parentId} onChange={handleChange}>
+                  <option value="">-- None (Top Level) --</option>
+                  {potentialParents.map(a => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
                 </Select>
                 <Select label="Status" name="status" value={formData.status} onChange={handleChange}>
                   <option value="OPERATIONAL">Operational</option>

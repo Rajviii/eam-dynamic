@@ -28,6 +28,7 @@ export async function GET(request, { params }) {
         criticality: true,
         site: true,
         category: true,
+        parent: { select: { id: true, name: true, code: true } },
         histories: { orderBy: { createdAt: 'desc' }, take: 5 },
         workOrders: { orderBy: { createdAt: 'desc' }, take: 5 }
       }
@@ -69,6 +70,7 @@ export async function PUT(request, { params }) {
         lifecycleStage: data.lifecycleStage,
         siteId: data.siteId,
         categoryId: data.categoryId || null,
+        parentId: data.parentId || null,
         imageUrl: data.imageUrl || null,
         manufacturer: data.manufacturer || null,
         modelNumber: data.modelNumber || null,

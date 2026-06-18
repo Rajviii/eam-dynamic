@@ -26,6 +26,7 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit')) || 10;
     const skip = (page - 1) * limit;
     const query = searchParams.get('query') || searchParams.get('search') || '';
+    const siteId = searchParams.get('siteId') || '';
     
     const validCriticalities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
     const criticalityParam = searchParams.get('criticality') || '';
@@ -36,6 +37,7 @@ export async function GET(request) {
 
     const where = {
       isDeleted: false,
+      ...(siteId ? { siteId } : {}),
       ...(criticalityList.length > 0 ? {
         criticality: {
           classification: { in: criticalityList }
@@ -122,6 +124,7 @@ export async function POST(request) {
         lifecycleStage: data.lifecycleStage || 'OPERATIONAL',
         siteId: siteIdToUse,
         categoryId: data.categoryId || null,
+        parentId: data.parentId || null,
         imageUrl: data.imageUrl || null,
         manufacturer: data.manufacturer || null,
         modelNumber: data.modelNumber || null,

@@ -1,15 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-export default function NewAssetPage() {
+function NewAssetForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledParentId = searchParams.get('parentId') || '';
+  const prefilledSiteId = searchParams.get('siteId') || '';
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [sites, setSites] = useState([]);
+  const [potentialParents, setPotentialParents] = useState([]);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardScores, setWizardScores] = useState({
     safetyImpact: 1, environmentalImpact: 1, productionImpact: 1, financialImpact: 1
@@ -17,6 +22,7 @@ export default function NewAssetPage() {
 
   const [formData, setFormData] = useState({
     code: '', name: '', status: 'OPERATIONAL', lifecycleStage: 'PLANNED', categoryId: '', siteId: '',
+    parentId: '',
     imageUrl: '', manufacturer: '', modelNumber: '', serialNumber: '', installationDate: '',
     safetyImpact: 1, environmentalImpact: 1, productionImpact: 1, financialImpact: 1
   });
@@ -27,9 +33,28 @@ export default function NewAssetPage() {
         setCategories((await catRes.json()).data || []);
         const sitesData = (await siteRes.json()).data || [];
         setSites(sitesData);
-        if (sitesData.length > 0) setFormData(f => ({ ...f, siteId: sitesData[0].id }));
+        
+        const initialSiteId = prefilledSiteId || (sitesData.length > 0 ? sitesData[0].id : '');
+        setFormData(f => ({ 
+          ...f, 
+          siteId: initialSiteId,
+          parentId: prefilledParentId
+        }));
       }).catch(console.error);
-  }, []);
+  }, [prefilledSiteId, prefilledParentId]);
+
+  useEffect(() => {
+    if (!formData.siteId) {
+      setPotentialParents([]);
+      return;
+    }
+    fetch(`/api/assets?siteId=${formData.siteId}&limit=1000`)
+      .then(res => res.json())
+      .then(resData => {
+        setPotentialParents(resData.data || []);
+      })
+      .catch(console.error);
+  }, [formData.siteId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -85,6 +110,10 @@ export default function NewAssetPage() {
             <Select label="Location (Site)" required name="siteId" value={formData.siteId} onChange={handleChange}>
               <option value="">-- Select Location --</option>
               {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </Select>
+            <Select label="Parent Asset / System" name="parentId" value={formData.parentId} onChange={handleChange}>
+              <option value="">-- None (Top Level) --</option>
+              {potentialParents.map(a => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
             </Select>
             <Select label="Status" name="status" value={formData.status} onChange={handleChange}>
               <option value="OPERATIONAL">Operational</option>
@@ -346,5 +375,13 @@ export default function NewAssetPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewAssetPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 animate-pulse">Loading new asset form...</div>}>
+      <NewAssetForm />
+    </Suspense>
   );
 }
